@@ -1,39 +1,17 @@
 package com.example.timetable.service;
 
-import com.example.timetable.model.Room;
-import com.example.timetable.repository.RoomRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.example.timetable.dto.request.RoomRequest;
+import com.example.timetable.dto.response.RoomResponse;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
-@Service
-@RequiredArgsConstructor
-@Transactional
-public class RoomService {
+public interface RoomService {
 
-    private final RoomRepository roomRepository;
+    List<RoomResponse> findAll();
 
-    public List<Room> findAll() {
-        return roomRepository.findAll();
-    }
+    RoomResponse findById(Long id);
 
-    public Room save(Room room) {
-        return roomRepository.save(room);
-    }
+    RoomResponse save(RoomRequest request);
 
-    public Room findById(Long id) {
-        return roomRepository.findById(id)
-                .orElseThrow(() ->
-                        new NoSuchElementException("Room not found with id: " + id));
-    }
-
-    public void deleteById(Long id) {
-        if (!roomRepository.existsById(id)) {
-            throw new NoSuchElementException("Room not found with id: " + id);
-        }
-        roomRepository.deleteById(id);
-    }
+    void deleteById(Long id);
 }

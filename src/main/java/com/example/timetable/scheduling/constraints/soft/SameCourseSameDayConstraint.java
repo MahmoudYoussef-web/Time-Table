@@ -7,10 +7,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/**
- * Penalizes scheduling the same course multiple times
- * on the same day.
- */
 @Component
 public class SameCourseSameDayConstraint implements SoftConstraint {
 
@@ -31,10 +27,10 @@ public class SameCourseSameDayConstraint implements SoftConstraint {
             for (int j = i + 1; j < genes.size(); j++) {
                 Gene g2 = genes.get(j);
 
-                if (g1.getClassSection().getCourse()
-                        .equals(g2.getClassSection().getCourse())
-                        && g1.getTimeSlot().getDayOfWeek()
-                        .equals(g2.getTimeSlot().getDayOfWeek())) {
+                if (g1.getSection().getCourse()
+                        .equals(g2.getSection().getCourse())
+                        && g1.getTimeSlot().getDay()
+                        .equals(g2.getTimeSlot().getDay())) {
                     violations++;
                 }
             }

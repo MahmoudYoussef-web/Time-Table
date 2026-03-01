@@ -1,38 +1,18 @@
 package com.example.timetable.service;
 
-import com.example.timetable.model.Instructor;
-import com.example.timetable.repository.InstructorRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.example.timetable.entity.Instructor;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
-@Service
-@RequiredArgsConstructor
-@Transactional
-public class InstructorService {
+public interface InstructorService {
 
-    private final InstructorRepository instructorRepository;
+    List<Instructor> findAll();
 
-    public List<Instructor> findAll() {
-        return instructorRepository.findAll();
-    }
+    Instructor findById(Long id);
 
-    public Instructor save(Instructor instructor) {
-        return instructorRepository.save(instructor);
-    }
+    Instructor findByEmail(String email); // ✅ ADD
 
-    public Instructor findById(Long id) {
-        return instructorRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Instructor not found with id: " + id));
-    }
+    Instructor save(Instructor instructor);
 
-    public void deleteById(Long id) {
-        if (!instructorRepository.existsById(id)) {
-            throw new NoSuchElementException("Instructor not found with id: " + id);
-        }
-        instructorRepository.deleteById(id);
-    }
+    void deleteById(Long id);
 }

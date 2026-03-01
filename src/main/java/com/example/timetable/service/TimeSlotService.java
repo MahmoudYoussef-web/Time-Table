@@ -1,39 +1,16 @@
 package com.example.timetable.service;
 
-import com.example.timetable.model.TimeSlot;
-import com.example.timetable.repository.TimeSlotRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.example.timetable.entity.TimeSlot;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
-@Service
-@RequiredArgsConstructor
-@Transactional
-public class TimeSlotService {
+public interface TimeSlotService {
 
-    private final TimeSlotRepository timeSlotRepository;
+    List<TimeSlot> findAll();
 
-    public List<TimeSlot> findAll() {
-        return timeSlotRepository.findAll();
-    }
+    TimeSlot findById(Long id);
 
-    public TimeSlot save(TimeSlot timeSlot) {
-        return timeSlotRepository.save(timeSlot);
-    }
+    TimeSlot save(TimeSlot timeSlot);
 
-    public TimeSlot findById(Long id) {
-        return timeSlotRepository.findById(id)
-                .orElseThrow(() ->
-                        new NoSuchElementException("TimeSlot not found with id: " + id));
-    }
-
-    public void deleteById(Long id) {
-        if (!timeSlotRepository.existsById(id)) {
-            throw new NoSuchElementException("TimeSlot not found with id: " + id);
-        }
-        timeSlotRepository.deleteById(id);
-    }
+    void deleteById(Long id);
 }

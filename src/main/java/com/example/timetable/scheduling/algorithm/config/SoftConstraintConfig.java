@@ -4,6 +4,7 @@ import com.example.timetable.scheduling.constraints.SoftConstraint;
 import com.example.timetable.scheduling.constraints.soft.InstructorBackToBackConstraint;
 import com.example.timetable.scheduling.constraints.soft.InstructorGapPreferenceConstraint;
 import com.example.timetable.scheduling.constraints.soft.SameCourseSameDayConstraint;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,12 +15,15 @@ public class SoftConstraintConfig {
 
     @Bean
     public List<SoftConstraint> softConstraints(
-            GapPreferenceProperties gapProps
+            InstructorBackToBackConstraint backToBack,
+            InstructorGapPreferenceConstraint gap,
+            SameCourseSameDayConstraint sameCourse
     ) {
+
         return List.of(
-                new InstructorBackToBackConstraint(),
-                new InstructorGapPreferenceConstraint(gapProps.getMinMinutes()),
-                new SameCourseSameDayConstraint()
+                backToBack,
+                gap,
+                sameCourse
         );
     }
 }

@@ -8,10 +8,6 @@ import org.springframework.stereotype.Component;
 import java.time.LocalTime;
 import java.util.List;
 
-/**
- * Prevents overlapping time intervals for the same room,
- * instructor, or class section on the same day.
- */
 @Component
 public class TimeOverlapConstraint implements HardConstraint {
 
@@ -32,8 +28,8 @@ public class TimeOverlapConstraint implements HardConstraint {
             for (int j = i + 1; j < genes.size(); j++) {
                 Gene g2 = genes.get(j);
 
-                if (!g1.getTimeSlot().getDayOfWeek()
-                        .equals(g2.getTimeSlot().getDayOfWeek())) {
+                if (!g1.getTimeSlot().getDay()
+                        .equals(g2.getTimeSlot().getDay())) {
                     continue;
                 }
 
@@ -46,9 +42,9 @@ public class TimeOverlapConstraint implements HardConstraint {
                 if (!overlap) continue;
 
                 if (g1.getRoom().equals(g2.getRoom())
-                        || g1.getClassSection().equals(g2.getClassSection())
-                        || g1.getClassSection().getInstructor()
-                        .equals(g2.getClassSection().getInstructor())) {
+                        || g1.getSection().equals(g2.getSection())
+                        || g1.getSection().getInstructor()
+                        .equals(g2.getSection().getInstructor())) {
                     violations++;
                 }
             }

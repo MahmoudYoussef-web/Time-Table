@@ -1,31 +1,43 @@
 package com.example.timetable.mapper;
 
-import com.example.timetable.dto.TimeSlotRequest;
-import com.example.timetable.dto.TimeSlotResponse;
-import com.example.timetable.model.TimeSlot;
+import com.example.timetable.dto.request.TimeSlotRequest;
+import com.example.timetable.dto.response.TimeSlotResponse;
+import com.example.timetable.entity.TimeSlot;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 
 public class TimeSlotMapper {
 
+    // Convert request to entity
     public static TimeSlot toEntity(TimeSlotRequest request) {
+
         TimeSlot timeSlot = new TimeSlot();
 
-        timeSlot.setDayOfWeek(
-                DayOfWeek.valueOf(request.dayOfWeek().toUpperCase())
+        // Set day of week
+        timeSlot.setDay(
+                DayOfWeek.valueOf(request.day().toUpperCase())
         );
 
-        timeSlot.setStartTime(LocalTime.parse(request.startTime()));
-        timeSlot.setEndTime(LocalTime.parse(request.endTime()));
+        // Set start time
+        timeSlot.setStartTime(
+                LocalTime.parse(request.startTime())
+        );
+
+        // Set end time
+        timeSlot.setEndTime(
+                LocalTime.parse(request.endTime())
+        );
 
         return timeSlot;
     }
 
+    // Convert entity to response
     public static TimeSlotResponse toResponse(TimeSlot timeSlot) {
+
         return new TimeSlotResponse(
                 timeSlot.getId(),
-                timeSlot.getDayOfWeek().name(),
+                timeSlot.getDay().name(),
                 timeSlot.getStartTime().toString(),
                 timeSlot.getEndTime().toString()
         );

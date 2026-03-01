@@ -7,10 +7,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/**
- * Ensures that an instructor is not assigned to more than one class
- * in the same time slot.
- */
 @Component
 public class InstructorConflictConstraint implements HardConstraint {
 
@@ -32,8 +28,8 @@ public class InstructorConflictConstraint implements HardConstraint {
                 Gene g2 = genes.get(j);
 
                 if (g1.getTimeSlot().equals(g2.getTimeSlot())
-                        && g1.getClassSection().getInstructor()
-                        .equals(g2.getClassSection().getInstructor())) {
+                        && g1.getSection().getInstructor()
+                        .equals(g2.getSection().getInstructor())) {
                     violations++;
                 }
             }

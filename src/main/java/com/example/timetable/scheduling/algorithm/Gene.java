@@ -1,8 +1,8 @@
 package com.example.timetable.scheduling.algorithm;
 
-import com.example.timetable.model.ClassSection;
-import com.example.timetable.model.Room;
-import com.example.timetable.model.TimeSlot;
+import com.example.timetable.entity.Section;
+import com.example.timetable.entity.Room;
+import com.example.timetable.entity.TimeSlot;
 import lombok.*;
 
 @Getter
@@ -13,11 +13,16 @@ import lombok.*;
 @ToString
 public class Gene {
 
-    private ClassSection classSection;
+    // Section assigned
+    private Section section;
+
+    // Assigned room
     private Room room;
+
+    // Assigned time slot
     private TimeSlot timeSlot;
 
     public Gene copy() {
-        return new Gene(classSection, room, timeSlot);
+        return new Gene(section, room, timeSlot);
     }
 }

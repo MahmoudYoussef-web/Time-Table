@@ -1,15 +1,16 @@
 package com.example.timetable.mapper;
 
-import com.example.timetable.dto.ScheduleDTO;
-import com.example.timetable.dto.ScheduleEntryDTO;
-import com.example.timetable.model.Schedule;
-import com.example.timetable.model.ScheduleEntry;
+import com.example.timetable.dto.response.ScheduleDTO;
+import com.example.timetable.dto.response.ScheduleEntryDTO;
+import com.example.timetable.entity.Schedule;
+import com.example.timetable.entity.ScheduleEntry;
 
 import java.util.Comparator;
 import java.util.List;
 
 public class ScheduleMapper {
 
+    // Convert Schedule Entity -> DTO
     public static ScheduleDTO toDTO(Schedule schedule) {
 
         List<ScheduleEntryDTO> entries =
@@ -19,7 +20,7 @@ public class ScheduleMapper {
                                 Comparator
                                         .comparing(
                                                 (ScheduleEntry e) ->
-                                                        e.getTimeSlot().getDayOfWeek()
+                                                        e.getTimeSlot().getDay()
                                         )
                                         .thenComparing(
                                                 e -> e.getTimeSlot().getStartTime()
@@ -37,21 +38,41 @@ public class ScheduleMapper {
         );
     }
 
-    private static ScheduleEntryDTO toEntryDTO(ScheduleEntry entry) {
+    // Convert ScheduleEntry Entity -> DTO
+    private static ScheduleEntryDTO toEntryDTO(
+            ScheduleEntry entry
+    ) {
 
         return new ScheduleEntryDTO(
-                entry.getClassSection().getId(),
 
-                entry.getClassSection().getCourse().getCode(),
-                entry.getClassSection().getCourse().getName(),
+                entry.getSection().getId(),
 
-                entry.getClassSection().getInstructor().getName(),
+                entry.getSection()
+                        .getCourse()
+                        .getCode(),
+
+                entry.getSection()
+                        .getCourse()
+                        .getName(),
+
+                entry.getSection()
+                        .getInstructor()
+                        .getUser()
+                        .getFullName(),
+
                 entry.getRoom().getRoomNumber(),
 
-                // 👇 هنا التصليح
-                entry.getTimeSlot().getDayOfWeek().name(),
-                entry.getTimeSlot().getStartTime().toString(),
-                entry.getTimeSlot().getEndTime().toString(),
+                entry.getTimeSlot()
+                        .getDay()
+                        .name(),
+
+                entry.getTimeSlot()
+                        .getStartTime()
+                        .toString(),
+
+                entry.getTimeSlot()
+                        .getEndTime()
+                        .toString(),
 
                 0,
                 0

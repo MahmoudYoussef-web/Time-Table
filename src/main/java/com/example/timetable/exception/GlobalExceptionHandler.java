@@ -8,75 +8,92 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
-import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /* ========= AUTH EXCEPTIONS ========= */
+    // Validation errors
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<?> handleValidation(
+            MethodArgumentNotValidException ex
+    ) {
 
-    @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<ApiError> handleInvalidCredentials(
-            InvalidCredentialsException ex) {
+        Map<String, String> errors = new HashMap<>();
 
-        return buildError(HttpStatus.UNAUTHORIZED, ex.getMessage());
+        for (FieldError field : ex.getBindingResult().getFieldErrors()) {
+            errors.put(field.getField(), field.getDefaultMessage());
+        }
+
+        return ResponseEntity
+                .badRequest()
+                .body(errors);
     }
 
-    @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<ApiError> handleUserAlreadyExists(
-            UserAlreadyExistsException ex) {
-
-        return buildError(HttpStatus.CONFLICT, ex.getMessage());
-    }
-
+    // User not found
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiError> handleUserNotFound(
-            UserNotFoundException ex) {
+            UserNotFoundException ex
+    ) {
 
-        return buildError(HttpStatus.NOT_FOUND, ex.getMessage());
+        return buildError(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage()
+        );
     }
 
-    /* ========= COMMON EXCEPTIONS ========= */
+    // Duplicate user
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleUserExists(
+            UserAlreadyExistsException ex
+    ) {
 
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<ApiError> handleNotFound(NoSuchElementException ex) {
-        return buildError(HttpStatus.NOT_FOUND, ex.getMessage());
+        return buildError(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ApiError> handleIllegalState(IllegalStateException ex) {
-        return buildError(HttpStatus.BAD_REQUEST, ex.getMessage());
+    // Invalid credentials
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiError> handleInvalidLogin(
+            InvalidCredentialsException ex
+    ) {
+
+        return buildError(
+                HttpStatus.UNAUTHORIZED,
+                ex.getMessage()
+        );
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiError> handleValidationErrors(
-            MethodArgumentNotValidException ex) {
+    // Illegal arguments
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleIllegal(
+            IllegalArgumentException ex
+    ) {
 
-        String message = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(FieldError::getDefaultMessage)
-                .collect(Collectors.joining(", "));
-
-        return buildError(HttpStatus.BAD_REQUEST, message);
+        return buildError(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage()
+        );
     }
 
-    /* ========= FALLBACK ========= */
-
+    // Fallback
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleGeneric(Exception ex) {
+    public ResponseEntity<ApiError> handleOther(Exception ex) {
+
         return buildError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Internal server error"
         );
     }
 
-    /* ========= HELPER ========= */
-
+    // Build standardized error response
     private ResponseEntity<ApiError> buildError(
             HttpStatus status,
-            String message) {
+            String message
+    ) {
 
         ApiError error = new ApiError(
                 status.value(),
@@ -84,6 +101,6 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now()
         );
 
-        return ResponseEntity.status(status).body(error);
+        return new ResponseEntity<>(error, status);
     }
 }

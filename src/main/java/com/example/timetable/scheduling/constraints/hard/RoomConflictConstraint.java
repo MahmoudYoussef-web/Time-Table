@@ -7,10 +7,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/**
- * Ensures that a room is not assigned to more than one class
- * in the same time slot.
- */
 @Component
 public class RoomConflictConstraint implements HardConstraint {
 

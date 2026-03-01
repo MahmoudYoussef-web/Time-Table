@@ -1,16 +1,13 @@
 package com.example.timetable.scheduling.algorithm.mutation;
 
-import com.example.timetable.model.Room;
-import com.example.timetable.model.TimeSlot;
+import com.example.timetable.entity.Room;
+import com.example.timetable.entity.TimeSlot;
 import com.example.timetable.scheduling.algorithm.Chromosome;
 import com.example.timetable.scheduling.algorithm.Gene;
 
 import java.util.List;
 import java.util.Random;
 
-/**
- * Random mutation strategy for Genetic Algorithm.
- */
 public class RandomMutation implements MutationStrategy {
 
     private final Random random;

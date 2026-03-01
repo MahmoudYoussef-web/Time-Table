@@ -8,10 +8,6 @@ import org.springframework.stereotype.Component;
 import java.time.LocalTime;
 import java.util.List;
 
-/**
- * Penalizes schedules where an instructor has back-to-back lectures
- * on the same day.
- */
 @Component
 public class InstructorBackToBackConstraint implements SoftConstraint {
 
@@ -32,20 +28,20 @@ public class InstructorBackToBackConstraint implements SoftConstraint {
             for (int j = i + 1; j < genes.size(); j++) {
                 Gene g2 = genes.get(j);
 
-                if (!g1.getClassSection().getInstructor()
-                        .equals(g2.getClassSection().getInstructor())) {
+                if (!g1.getSection().getInstructor()
+                        .equals(g2.getSection().getInstructor())) {
                     continue;
                 }
 
-                if (!g1.getTimeSlot().getDayOfWeek()
-                        .equals(g2.getTimeSlot().getDayOfWeek())) {
+                if (!g1.getTimeSlot().getDay()
+                        .equals(g2.getTimeSlot().getDay())) {
                     continue;
                 }
 
-                LocalTime start1 = g1.getTimeSlot().getStartTime();
                 LocalTime end1 = g1.getTimeSlot().getEndTime();
-                LocalTime start2 = g2.getTimeSlot().getStartTime();
+                LocalTime start1 = g1.getTimeSlot().getStartTime();
                 LocalTime end2 = g2.getTimeSlot().getEndTime();
+                LocalTime start2 = g2.getTimeSlot().getStartTime();
 
                 if (end1.equals(start2) || end2.equals(start1)) {
                     violations++;
