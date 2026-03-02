@@ -17,40 +17,45 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ScheduleController {
 
-    private final ScheduleService scheduleService;
+        private final ScheduleService scheduleService;
 
-    // Generate new schedule
-    @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER')")
-    @PostMapping("/generate")
-    public ResponseEntity<ScheduleDTO> generate() {
+        @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER')")
+        @PostMapping("/generate/{semesterId}")
+        public ResponseEntity<ScheduleDTO> generate(
+                        @PathVariable Long semesterId) {
 
-        Schedule schedule =
-                scheduleService.generateSchedule();
+                Schedule schedule = scheduleService.generateSchedule(semesterId);
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ScheduleMapper.toDTO(schedule));
-    }
+                return ResponseEntity
+                                .status(HttpStatus.CREATED)
+                                .body(ScheduleMapper.toDTO(schedule));
+        }
 
-    // Get schedule by id
-    @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER','INSTRUCTOR')")
-    @GetMapping("/{id}")
-    public ResponseEntity<ScheduleDTO> getById(
-            @PathVariable Long id
-    ) {
-        return ResponseEntity.ok(
-                scheduleService.getScheduleById(id)
-        );
-    }
+        // Get schedule by id
+        @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER','INSTRUCTOR')")
+        @GetMapping("/{id}")
+        public ResponseEntity<ScheduleDTO> getById(
+                        @PathVariable Long id) {
+                return ResponseEntity.ok(
+                                scheduleService.getScheduleById(id));
+        }
 
-    // Validate schedule
-    @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER')")
-    @GetMapping("/{id}/validate")
-    public ResponseEntity<ScheduleDTO> validate(
-            @PathVariable Long id
-    ) {
-        return ResponseEntity.ok(
-                scheduleService.validateSchedule(id)
-        );
-    }
+        // Validate schedule
+        @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER')")
+        @GetMapping("/{id}/validate")
+        public ResponseEntity<ScheduleDTO> validate(
+                        @PathVariable Long id) {
+                return ResponseEntity.ok(
+                                scheduleService.validateSchedule(id));
+        }
+
+        @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER')")
+        @PatchMapping("/{scheduleId}/entries/{entryId}/lock")
+        public ResponseEntity<Void> lockEntry(
+                        @PathVariable Long scheduleId,
+                        @PathVariable Long entryId) {
+
+                scheduleService.lockEntry(scheduleId, entryId);
+                return ResponseEntity.noContent().build();
+        }
 }

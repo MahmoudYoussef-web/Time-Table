@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.timetable.entity.enums.ScheduleStatus;
+
 @Entity
 @Table(name = "schedules")
 @Getter
@@ -39,13 +41,18 @@ public class Schedule {
     @Column(nullable = false)
     private int softViolations;
 
+    // 🔥 NEW: Schedule Status
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ScheduleStatus status = ScheduleStatus.DRAFT;
+
+    // 🔥 NEW: Link to Semester
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "semester_id", nullable = false)
+    private Semester semester;
+
     // Schedule entries
-    @OneToMany(
-            mappedBy = "schedule",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
+    @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<ScheduleEntry> entries = new ArrayList<>();
 
     // Auto timestamp

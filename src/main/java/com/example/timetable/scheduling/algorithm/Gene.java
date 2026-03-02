@@ -3,26 +3,28 @@ package com.example.timetable.scheduling.algorithm;
 import com.example.timetable.entity.Section;
 import com.example.timetable.entity.Room;
 import com.example.timetable.entity.TimeSlot;
-import lombok.*;
+import lombok.Data;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode
-@ToString
+@Data
 public class Gene {
 
-    // Section assigned
     private Section section;
-
-    // Assigned room
     private Room room;
-
-    // Assigned time slot
     private TimeSlot timeSlot;
 
+    // 🔒 Prevent mutation if true
+    private boolean locked;
+
+    public Gene(Section section, Room room, TimeSlot timeSlot) {
+        this.section = section;
+        this.room = room;
+        this.timeSlot = timeSlot;
+        this.locked = false;
+    }
+
     public Gene copy() {
-        return new Gene(section, room, timeSlot);
+        Gene copy = new Gene(section, room, timeSlot);
+        copy.setLocked(this.locked);
+        return copy;
     }
 }

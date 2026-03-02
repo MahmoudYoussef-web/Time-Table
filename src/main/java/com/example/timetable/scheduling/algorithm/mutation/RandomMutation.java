@@ -18,22 +18,24 @@ public class RandomMutation implements MutationStrategy {
 
     @Override
     public void mutate(Chromosome chromosome,
-                       List<Room> rooms,
-                       List<TimeSlot> slots,
-                       double mutationRate) {
+            List<Room> rooms,
+            List<TimeSlot> slots,
+            double mutationRate) {
 
         for (Gene gene : chromosome.getGenes()) {
+
+            if (gene.isLocked()) {
+                continue;
+            }
 
             if (random.nextDouble() < mutationRate) {
 
                 if (random.nextBoolean()) {
                     gene.setRoom(
-                            rooms.get(random.nextInt(rooms.size()))
-                    );
+                            rooms.get(random.nextInt(rooms.size())));
                 } else {
                     gene.setTimeSlot(
-                            slots.get(random.nextInt(slots.size()))
-                    );
+                            slots.get(random.nextInt(slots.size())));
                 }
             }
         }

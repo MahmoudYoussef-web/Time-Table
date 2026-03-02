@@ -2,6 +2,7 @@ package com.example.timetable.scheduling.algorithm;
 
 import com.example.timetable.entity.Section;
 import com.example.timetable.entity.Room;
+import com.example.timetable.entity.ScheduleEntry;
 import com.example.timetable.entity.TimeSlot;
 import com.example.timetable.scheduling.algorithm.crossover.CrossoverStrategy;
 import com.example.timetable.scheduling.algorithm.mutation.MutationStrategy;
@@ -13,8 +14,7 @@ import java.util.*;
 
 public class GeneticAlgorithm {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(GeneticAlgorithm.class);
+    private static final Logger log = LoggerFactory.getLogger(GeneticAlgorithm.class);
 
     private final int populationSize;
     private final int maxGenerations;
@@ -30,16 +30,16 @@ public class GeneticAlgorithm {
     private final MutationStrategy mutationStrategy;
 
     public GeneticAlgorithm(int populationSize,
-                            int maxGenerations,
-                            double crossoverRate,
-                            double mutationRate,
-                            int elitismCount,
-                            double earlyStopThreshold,
-                            long randomSeed,
-                            FitnessCalculator fitnessCalculator,
-                            SelectionStrategy selectionStrategy,
-                            CrossoverStrategy crossoverStrategy,
-                            MutationStrategy mutationStrategy) {
+            int maxGenerations,
+            double crossoverRate,
+            double mutationRate,
+            int elitismCount,
+            double earlyStopThreshold,
+            long randomSeed,
+            FitnessCalculator fitnessCalculator,
+            SelectionStrategy selectionStrategy,
+            CrossoverStrategy crossoverStrategy,
+            MutationStrategy mutationStrategy) {
 
         this.populationSize = populationSize;
         this.maxGenerations = maxGenerations;
@@ -56,13 +56,12 @@ public class GeneticAlgorithm {
     }
 
     public Chromosome evolve(List<Section> sections,
-                             List<Room> rooms,
-                             List<TimeSlot> slots) {
+            List<Room> rooms,
+            List<TimeSlot> slots) {
 
         validateInputs(sections, rooms, slots);
 
-        List<Chromosome> population =
-                initializePopulation(sections, rooms, slots);
+        List<Chromosome> population = initializePopulation(sections, rooms, slots);
 
         for (int generation = 0; generation < maxGenerations; generation++) {
 
@@ -85,8 +84,8 @@ public class GeneticAlgorithm {
     }
 
     private List<Chromosome> produceNextGeneration(List<Chromosome> population,
-                                                   List<Room> rooms,
-                                                   List<TimeSlot> slots) {
+            List<Room> rooms,
+            List<TimeSlot> slots) {
 
         List<Chromosome> next = new ArrayList<>(populationSize);
 
@@ -101,10 +100,9 @@ public class GeneticAlgorithm {
             Chromosome parent1 = selectionStrategy.select(population);
             Chromosome parent2 = selectionStrategy.select(population);
 
-            Chromosome child =
-                    random.nextDouble() < crossoverRate
-                            ? crossoverStrategy.crossover(parent1, parent2)
-                            : parent1.copy();
+            Chromosome child = random.nextDouble() < crossoverRate
+                    ? crossoverStrategy.crossover(parent1, parent2)
+                    : parent1.copy();
 
             mutationStrategy.mutate(child, rooms, slots, mutationRate);
             next.add(child);
@@ -118,8 +116,8 @@ public class GeneticAlgorithm {
     }
 
     private void validateInputs(List<Section> sections,
-                                List<Room> rooms,
-                                List<TimeSlot> slots) {
+            List<Room> rooms,
+            List<TimeSlot> slots) {
 
         if (sections == null || sections.isEmpty())
             throw new IllegalArgumentException("No sections provided");
@@ -132,8 +130,8 @@ public class GeneticAlgorithm {
     }
 
     private List<Chromosome> initializePopulation(List<Section> sections,
-                                                  List<Room> rooms,
-                                                  List<TimeSlot> slots) {
+            List<Room> rooms,
+            List<TimeSlot> slots) {
 
         List<Chromosome> population = new ArrayList<>(populationSize);
 
@@ -145,8 +143,78 @@ public class GeneticAlgorithm {
                 genes.add(new Gene(
                         section,
                         rooms.get(random.nextInt(rooms.size())),
-                        slots.get(random.nextInt(slots.size()))
-                ));
+                        slots.get(random.nextInt(slots.size()))));
+            }
+
+            population.add(new Chromosome(genes));
+        }
+
+        return population;
+    }
+
+    public Chromosome evolveWithLocks(
+            List<Section> sections,
+            List<Room> rooms,
+            List<TimeSlot> slots,
+            Map<Long, ScheduleEntry> lockedEntries) {
+
+        validateInputs(sections, rooms, slots);
+
+        List<Chromosome> population = initializePopulationWithLocks(sections, rooms, slots, lockedEntries);
+
+        for (int generation = 0; generation < maxGenerations; generation++) {
+
+            fitnessCalculator.calculateFitness(population);
+            population.sort(byFitnessDesc());
+
+            Chromosome best = population.get(0);
+
+            if (best.getFitness() >= earlyStopThreshold) {
+                break;
+            }
+
+            population = produceNextGeneration(population, rooms, slots);
+        }
+
+        fitnessCalculator.calculateFitness(population);
+        population.sort(byFitnessDesc());
+
+        return population.get(0);
+    }
+
+    private List<Chromosome> initializePopulationWithLocks(
+            List<Section> sections,
+            List<Room> rooms,
+            List<TimeSlot> slots,
+            Map<Long, ScheduleEntry> lockedEntries) {
+
+        List<Chromosome> population = new ArrayList<>(populationSize);
+
+        for (int i = 0; i < populationSize; i++) {
+
+            List<Gene> genes = new ArrayList<>();
+
+            for (Section section : sections) {
+
+                if (lockedEntries.containsKey(section.getId())) {
+
+                    ScheduleEntry locked = lockedEntries.get(section.getId());
+
+                    Gene gene = new Gene(
+                            section,
+                            locked.getRoom(),
+                            locked.getTimeSlot());
+
+                    gene.setLocked(true);
+                    genes.add(gene);
+
+                } else {
+
+                    genes.add(new Gene(
+                            section,
+                            rooms.get(random.nextInt(rooms.size())),
+                            slots.get(random.nextInt(slots.size()))));
+                }
             }
 
             population.add(new Chromosome(genes));
