@@ -2,9 +2,11 @@ package com.example.timetable.scheduling.constraints.hard;
 
 import com.example.timetable.scheduling.algorithm.Chromosome;
 import com.example.timetable.scheduling.algorithm.Gene;
+import com.example.timetable.scheduling.constraints.ConstraintViolation;
 import com.example.timetable.scheduling.constraints.HardConstraint;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -12,13 +14,18 @@ public class InstructorConflictConstraint implements HardConstraint {
 
     @Override
     public String getName() {
-        return "Instructor Time Conflict";
+        return "INSTRUCTOR_CONFLICT";
     }
 
     @Override
     public int violations(Chromosome chromosome) {
+        return explain(chromosome).size();
+    }
 
-        int violations = 0;
+    @Override
+    public List<ConstraintViolation> explain(Chromosome chromosome) {
+
+        List<ConstraintViolation> violations = new ArrayList<>();
         List<Gene> genes = chromosome.getGenes();
 
         for (int i = 0; i < genes.size(); i++) {
@@ -30,7 +37,22 @@ public class InstructorConflictConstraint implements HardConstraint {
                 if (g1.getTimeSlot().equals(g2.getTimeSlot())
                         && g1.getSection().getInstructor()
                         .equals(g2.getSection().getInstructor())) {
-                    violations++;
+
+                    violations.add(
+                            new ConstraintViolation(
+                                    getName(),
+                                    g1.getSection().getId(),
+                                    "Instructor "
+                                            + g1.getSection()
+                                            .getInstructor()
+                                            .getUser()
+                                            .getFullName()
+                                            + " assigned twice at "
+                                            + g1.getTimeSlot().getDay()
+                                            + " "
+                                            + g1.getTimeSlot().getStartTime()
+                            )
+                    );
                 }
             }
         }

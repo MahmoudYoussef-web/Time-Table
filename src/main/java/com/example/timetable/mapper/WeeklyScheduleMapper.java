@@ -1,37 +1,52 @@
 package com.example.timetable.mapper;
 
-import com.example.timetable.dto.response.ScheduleDTO;
-import com.example.timetable.dto.response.ScheduleEntryDTO;
-import com.example.timetable.dto.response.WeeklyScheduleDTO;
+import com.example.timetable.dto.response.*;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.time.DayOfWeek;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class WeeklyScheduleMapper {
 
-    // Convert schedule to weekly table format
     public static WeeklyScheduleDTO toWeeklyTable(
             ScheduleDTO schedule
     ) {
 
-        Map<String, Map<String, ScheduleEntryDTO>> table =
-                new HashMap<>();
+        Map<String, List<ScheduleEntryDTO>> groupedByDay =
+                schedule.getEntries()
+                        .stream()
+                        .collect(Collectors.groupingBy(
+                                ScheduleEntryDTO::dayOfWeek
+                        ));
 
-        for (ScheduleEntryDTO entry : schedule.entries()) {
+        List<DayScheduleDTO> days = new ArrayList<>();
 
-            // Example: 09:00-11:00
-            String timeKey =
-                    entry.startTime() + "-" + entry.endTime();
+        for (DayOfWeek day : DayOfWeek.values()) {
 
-            // Example: MONDAY
-            String day =
-                    entry.dayOfWeek();
+            String dayName = day.name();
 
-            table
-                    .computeIfAbsent(timeKey, k -> new HashMap<>())
-                    .put(day, entry);
+            List<ScheduleEntryDTO> entries =
+                    groupedByDay.getOrDefault(dayName, List.of());
+
+            List<SlotDTO> slots =
+                    entries.stream()
+                            .sorted(
+                                    Comparator.comparing(
+                                            ScheduleEntryDTO::startTime
+                                    )
+                            )
+                            .map(entry ->
+                                    new SlotDTO(
+                                            entry.startTime(),
+                                            entry.endTime(),
+                                            entry
+                                    )
+                            )
+                            .collect(Collectors.toList());
+
+            days.add(new DayScheduleDTO(dayName, slots));
         }
 
-        return new WeeklyScheduleDTO(table);
+        return new WeeklyScheduleDTO(days);
     }
 }

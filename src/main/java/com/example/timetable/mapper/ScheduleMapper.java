@@ -10,7 +10,6 @@ import java.util.List;
 
 public class ScheduleMapper {
 
-    // Convert Schedule Entity -> DTO
     public static ScheduleDTO toDTO(Schedule schedule) {
 
         List<ScheduleEntryDTO> entries =
@@ -19,8 +18,8 @@ public class ScheduleMapper {
                         .sorted(
                                 Comparator
                                         .comparing(
-                                                (ScheduleEntry e) ->
-                                                        e.getTimeSlot().getDay()
+                                                (ScheduleEntry e)
+                                                        -> e.getTimeSlot().getDay()
                                         )
                                         .thenComparing(
                                                 e -> e.getTimeSlot().getStartTime()
@@ -34,46 +33,26 @@ public class ScheduleMapper {
                 schedule.getFitnessScore(),
                 schedule.getHardViolations(),
                 schedule.getSoftViolations(),
+                schedule.getStatus().name(),
+                schedule.getCreatedAt(),
                 entries
         );
     }
 
-    // Convert ScheduleEntry Entity -> DTO
     private static ScheduleEntryDTO toEntryDTO(
-            ScheduleEntry entry
-    ) {
+            ScheduleEntry entry) {
 
         return new ScheduleEntryDTO(
-
                 entry.getSection().getId(),
-
-                entry.getSection()
-                        .getCourse()
-                        .getCode(),
-
-                entry.getSection()
-                        .getCourse()
-                        .getName(),
-
-                entry.getSection()
-                        .getInstructor()
+                entry.getSection().getCourse().getCode(),
+                entry.getSection().getCourse().getName(),
+                entry.getSection().getInstructor()
                         .getUser()
                         .getFullName(),
-
                 entry.getRoom().getRoomNumber(),
-
-                entry.getTimeSlot()
-                        .getDay()
-                        .name(),
-
-                entry.getTimeSlot()
-                        .getStartTime()
-                        .toString(),
-
-                entry.getTimeSlot()
-                        .getEndTime()
-                        .toString(),
-
+                entry.getTimeSlot().getDay().name(),
+                entry.getTimeSlot().getStartTime().toString(),
+                entry.getTimeSlot().getEndTime().toString(),
                 0,
                 0
         );

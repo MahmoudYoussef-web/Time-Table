@@ -1,10 +1,7 @@
 package com.example.timetable.dto.response;
 
-import java.util.Map;
+import java.util.List;
 
 public record WeeklyScheduleDTO(
-
-        Map<String, Map<String, ScheduleEntryDTO>> table
-
-) {
-}
+        List<DayScheduleDTO> days
+) {}

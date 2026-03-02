@@ -1,116 +1,170 @@
 package com.example.timetable.service.impl;
 
 import com.example.timetable.dto.response.ScheduleDTO;
-import com.example.timetable.entity.*;
+import com.example.timetable.entity.Schedule;
+import com.example.timetable.entity.ScheduleEntry;
+import com.example.timetable.entity.ScheduleGenerationJob;
+import com.example.timetable.entity.Semester;
+import com.example.timetable.entity.enums.JobStatus;
+import com.example.timetable.entity.enums.ScheduleStatus;
+import com.example.timetable.entity.enums.SemesterStatus;
 import com.example.timetable.mapper.ScheduleMapper;
 import com.example.timetable.repository.ScheduleEntryRepository;
+import com.example.timetable.repository.ScheduleGenerationJobRepository;
 import com.example.timetable.repository.ScheduleRepository;
 import com.example.timetable.repository.SemesterRepository;
+import com.example.timetable.scheduling.constraints.ConstraintViolation;
+import com.example.timetable.service.ConflictEvaluationService;
 import com.example.timetable.service.GeneticScheduleService;
 import com.example.timetable.service.ScheduleService;
-import com.example.timetable.entity.enums.ScheduleStatus;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class ScheduleServiceImpl implements ScheduleService {
 
-        private final ScheduleRepository scheduleRepository;
-        private final ScheduleEntryRepository scheduleEntryRepository;
-        private final SemesterRepository semesterRepository;
-        private final GeneticScheduleService geneticScheduleService;
+    private final ScheduleRepository scheduleRepository;
+    private final ScheduleEntryRepository scheduleEntryRepository;
+    private final SemesterRepository semesterRepository;
+    private final GeneticScheduleService geneticScheduleService;
+    private final ScheduleGenerationJobRepository jobRepository;
+    private final ThreadPoolTaskExecutor taskExecutor;
+    private final ConflictEvaluationService conflictEvaluationService;
+    @Override
+    public UUID generateScheduleAsync(Long semesterId) {
 
-        @Override
-        public Schedule generateSchedule(Long semesterId) {
-                return geneticScheduleService.generate(semesterId);
+        Semester semester = semesterRepository.findById(semesterId)
+                .orElseThrow(() -> new NoSuchElementException("Semester not found"));
+
+        if (semester.getStatus() == SemesterStatus.CLOSED) {
+            throw new IllegalStateException("Cannot generate schedule for closed semester");
         }
 
-        @Override
-        public ScheduleDTO getScheduleById(Long id) {
-                Schedule schedule = getScheduleEntity(id);
-                return ScheduleMapper.toDTO(schedule);
-        }
+        ScheduleGenerationJob job = new ScheduleGenerationJob();
+        job.setId(UUID.randomUUID());
+        job.setStatus(JobStatus.RUNNING);
+        jobRepository.save(job);
 
-        @Override
-        public ScheduleDTO validateSchedule(Long id) {
+        taskExecutor.execute(() -> {
+            try {
 
-                Schedule schedule = getScheduleEntity(id);
+                Schedule schedule = geneticScheduleService.generate(semesterId);
 
-                if (schedule.getHardViolations() > 0) {
-                        throw new IllegalStateException("Cannot validate schedule with hard violations");
-                }
+                job.setScheduleId(schedule.getId());
+                job.setStatus(JobStatus.COMPLETED);
+                jobRepository.save(job);
 
-                schedule.setStatus(ScheduleStatus.VALIDATED);
+            } catch (Exception e) {
 
-                return ScheduleMapper.toDTO(schedule);
-        }
+                job.setStatus(JobStatus.FAILED);
+                jobRepository.save(job);
+            }
+        });
 
-        @Override
-        public ScheduleDTO publishSchedule(Long id) {
+        return job.getId();
+    }
 
-                Schedule schedule = getScheduleEntity(id);
+    @Override
+    public ScheduleGenerationJob getJob(UUID jobId) {
+        return jobRepository.findById(jobId)
+                .orElseThrow(() -> new NoSuchElementException("Job not found"));
+    }
 
-                if (schedule.getStatus() != ScheduleStatus.VALIDATED) {
-                        throw new IllegalStateException("Schedule must be validated before publishing");
-                }
+    @Override
+    public ScheduleDTO getScheduleById(Long id) {
+        return ScheduleMapper.toDTO(getScheduleEntity(id));
+    }
 
-                schedule.setStatus(ScheduleStatus.PUBLISHED);
+    @Override
+    public ScheduleDTO validateSchedule(Long id) {
+        Schedule schedule = getScheduleEntity(id);
 
-                return ScheduleMapper.toDTO(schedule);
-        }
+        if (schedule.getStatus() != ScheduleStatus.DRAFT)
+            throw new IllegalStateException("Only draft schedules can be validated");
 
-        @Override
-        public ScheduleDTO lockSchedule(Long id) {
+        if (schedule.getHardViolations() > 0)
+            throw new IllegalStateException("Cannot validate schedule with hard violations");
 
-                Schedule schedule = getScheduleEntity(id);
+        schedule.setStatus(ScheduleStatus.VALIDATED);
+        return ScheduleMapper.toDTO(schedule);
+    }
 
-                if (schedule.getStatus() != ScheduleStatus.PUBLISHED) {
-                        throw new IllegalStateException("Only published schedule can be locked");
-                }
+    @Override
+    public ScheduleDTO publishSchedule(Long id) {
+        Schedule schedule = getScheduleEntity(id);
 
-                schedule.setStatus(ScheduleStatus.LOCKED);
+        if (schedule.getStatus() != ScheduleStatus.VALIDATED)
+            throw new IllegalStateException("Schedule must be validated before publishing");
 
-                return ScheduleMapper.toDTO(schedule);
-        }
+        boolean exists = scheduleRepository
+                .existsBySemesterIdAndStatus(
+                        schedule.getSemester().getId(),
+                        ScheduleStatus.PUBLISHED);
 
-        @Override
-        public ScheduleDTO getByInstructor(Long instructorId) {
+        if (exists)
+            throw new IllegalStateException("Another schedule already published");
 
-                Schedule latest = scheduleRepository
-                                .findTopByOrderByCreatedAtDesc()
-                                .orElseThrow(() -> new NoSuchElementException("No schedules found"));
+        schedule.setStatus(ScheduleStatus.PUBLISHED);
+        return ScheduleMapper.toDTO(schedule);
+    }
 
-                List<ScheduleEntry> entries = scheduleEntryRepository
-                                .findByScheduleIdAndSectionInstructorId(
-                                                latest.getId(),
-                                                instructorId);
+    @Override
+    public ScheduleDTO lockSchedule(Long id) {
+        Schedule schedule = getScheduleEntity(id);
 
-                latest.setEntries(entries);
+        if (schedule.getStatus() != ScheduleStatus.PUBLISHED)
+            throw new IllegalStateException("Only published schedule can be locked");
 
-                return ScheduleMapper.toDTO(latest);
-        }
+        schedule.setStatus(ScheduleStatus.LOCKED);
+        return ScheduleMapper.toDTO(schedule);
+    }
 
-        @Override
-        public void lockEntry(Long scheduleId, Long entryId) {
+    @Override
+    public ScheduleDTO getByInstructor(Long instructorId) {
+        Schedule latest = scheduleRepository
+                .findTopByStatusOrderByCreatedAtDesc(ScheduleStatus.PUBLISHED)
+                .orElseThrow();
 
-                ScheduleEntry entry = scheduleEntryRepository.findById(entryId)
-                                .orElseThrow(() -> new NoSuchElementException("Entry not found"));
+        List<ScheduleEntry> entries =
+                scheduleEntryRepository
+                        .findByScheduleIdAndSectionInstructorId(
+                                latest.getId(), instructorId);
 
-                if (!entry.getSchedule().getId().equals(scheduleId)) {
-                        throw new IllegalArgumentException("Entry does not belong to schedule");
-                }
+        latest.setEntries(entries);
+        return ScheduleMapper.toDTO(latest);
+    }
 
-                entry.setLocked(true);
-        }
+    @Override
+    public void lockEntry(Long scheduleId, Long entryId) {
 
-        private Schedule getScheduleEntity(Long id) {
-                return scheduleRepository.findById(id)
-                                .orElseThrow(() -> new NoSuchElementException("Schedule not found: " + id));
-        }
+        ScheduleEntry entry =
+                scheduleEntryRepository.findById(entryId)
+                        .orElseThrow();
+
+        if (!entry.getSchedule().getId().equals(scheduleId))
+            throw new IllegalArgumentException("Invalid entry");
+
+        entry.setLocked(true);
+    }
+
+    private Schedule getScheduleEntity(Long id) {
+        return scheduleRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Schedule not found"));
+    }
+    @Override
+    public List<ConstraintViolation> getConflicts(Long scheduleId) {
+
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new NoSuchElementException("Schedule not found"));
+
+        return conflictEvaluationService.explain(schedule);
+    }
 }

@@ -5,10 +5,12 @@ import com.example.timetable.scheduling.algorithm.GeneticAlgorithm;
 import com.example.timetable.scheduling.algorithm.crossover.CrossoverStrategy;
 import com.example.timetable.scheduling.algorithm.mutation.MutationStrategy;
 import com.example.timetable.scheduling.algorithm.selection.SelectionStrategy;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@EnableConfigurationProperties(GAProperties.class)
 public class GeneticAlgorithmConfig {
 
     @Bean
@@ -26,6 +28,7 @@ public class GeneticAlgorithmConfig {
                 props.getMutationRate(),
                 props.getElitismCount(),
                 props.getEarlyStopThreshold(),
+                props.getMaxExecutionMillis(),
                 props.getRandomSeed(),
                 fitnessCalculator,
                 selectionStrategy,

@@ -1,5 +1,6 @@
 package com.example.timetable.entity;
 
+import com.example.timetable.entity.enums.SemesterStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,8 +22,8 @@ public class Semester {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String name; // e.g. "Fall 2025"
+    @Column(nullable = false, unique = true, length = 100)
+    private String name;
 
     @Column(nullable = false)
     private LocalDate startDate;
@@ -30,6 +31,24 @@ public class Semester {
     @Column(nullable = false)
     private LocalDate endDate;
 
-    @OneToMany(mappedBy = "semester", cascade = CascadeType.ALL)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private SemesterStatus status = SemesterStatus.DRAFT;
+
+    @OneToMany(mappedBy = "semester",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
     private List<Schedule> schedules = new ArrayList<>();
+
+    @PrePersist
+    @PreUpdate
+    private void validateDates() {
+        if (startDate == null || endDate == null) {
+            throw new IllegalStateException("Semester dates must not be null");
+        }
+        if (endDate.isBefore(startDate)) {
+            throw new IllegalStateException("Semester end date must be after start date");
+        }
+    }
 }

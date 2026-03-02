@@ -31,13 +31,15 @@ public class FitnessCalculator {
 
         for (Chromosome chromosome : population) {
 
-            int hardViolations = hardConstraints.stream()
-                    .mapToInt(c -> c.violations(chromosome))
-                    .sum();
+            int hardViolations = 0;
+            for (HardConstraint constraint : hardConstraints) {
+                hardViolations += constraint.violations(chromosome);
+            }
 
-            int softViolations = softConstraints.stream()
-                    .mapToInt(c -> c.violations(chromosome))
-                    .sum();
+            int softViolations = 0;
+            for (SoftConstraint constraint : softConstraints) {
+                softViolations += constraint.violations(chromosome);
+            }
 
             double penalty =
                     (hardViolations * hardWeight)
