@@ -10,7 +10,7 @@ public interface InstructorService {
 
     Instructor findById(Long id);
 
-    Instructor findByEmail(String email); // ✅ ADD
+    Instructor findByEmail(String email);
 
     Instructor save(Instructor instructor);
 

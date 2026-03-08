@@ -78,12 +78,12 @@ public class GeneticAlgorithm {
             }
 
             fitnessCalculator.calculateFitness(population);
-            population.sort(byFitnessDesc());
 
-            Chromosome best = population.get(0);
+            Chromosome best =
+                    Collections.max(population, byFitnessDesc());
 
             if (best.getFitness() >= earlyStopThreshold) {
-                log.info("Stopped due to early stop threshold");
+                log.info("Early stop reached");
                 break;
             }
 
@@ -91,9 +91,8 @@ public class GeneticAlgorithm {
         }
 
         fitnessCalculator.calculateFitness(population);
-        population.sort(byFitnessDesc());
 
-        return population.get(0);
+        return Collections.max(population, byFitnessDesc());
     }
 
     public Chromosome evolveWithLocks(List<Section> sections,
@@ -118,9 +117,9 @@ public class GeneticAlgorithm {
             }
 
             fitnessCalculator.calculateFitness(population);
-            population.sort(byFitnessDesc());
 
-            Chromosome best = population.get(0);
+            Chromosome best =
+                    Collections.max(population, byFitnessDesc());
 
             if (best.getFitness() >= earlyStopThreshold) {
                 break;
@@ -130,9 +129,8 @@ public class GeneticAlgorithm {
         }
 
         fitnessCalculator.calculateFitness(population);
-        population.sort(byFitnessDesc());
 
-        return population.get(0);
+        return Collections.max(population, byFitnessDesc());
     }
 
     private List<Chromosome> produceNextGeneration(
@@ -143,6 +141,8 @@ public class GeneticAlgorithm {
         List<Chromosome> next = new ArrayList<>(populationSize);
 
         int eliteCount = Math.min(elitismCount, population.size());
+
+        population.sort(byFitnessDesc());
 
         for (int i = 0; i < eliteCount; i++) {
             next.add(population.get(i).copy());
@@ -159,6 +159,7 @@ public class GeneticAlgorithm {
                             : parent1.copy();
 
             mutationStrategy.mutate(child, rooms, slots, mutationRate);
+
             next.add(child);
         }
 

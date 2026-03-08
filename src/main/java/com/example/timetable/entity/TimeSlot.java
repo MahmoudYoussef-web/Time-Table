@@ -1,5 +1,6 @@
 package com.example.timetable.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,6 +40,7 @@ public class TimeSlot {
     private LocalTime endTime;
 
     // Schedule entries using this slot
-    @OneToMany(mappedBy = "timeSlot", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "timeSlot")
+    @JsonIgnore
     private List<ScheduleEntry> scheduleEntries;
 }

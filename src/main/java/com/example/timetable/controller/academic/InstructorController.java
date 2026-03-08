@@ -2,10 +2,15 @@ package com.example.timetable.controller.academic;
 
 import com.example.timetable.dto.request.InstructorRequest;
 import com.example.timetable.dto.response.InstructorResponse;
+import com.example.timetable.entity.Department;
+import com.example.timetable.entity.Instructor;
 import com.example.timetable.mapper.InstructorMapper;
+import com.example.timetable.service.DepartmentService;
 import com.example.timetable.service.InstructorService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,6 +24,9 @@ import java.util.List;
 public class InstructorController {
 
     private final InstructorService instructorService;
+
+    // ⭐ أضف هذا السطر
+    private final DepartmentService departmentService;
 
     @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER','INSTRUCTOR')")
     @GetMapping
@@ -36,12 +44,17 @@ public class InstructorController {
     public ResponseEntity<InstructorResponse> create(
             @Valid @RequestBody InstructorRequest request
     ) {
+
+        Department department =
+                departmentService.findById(request.departmentId());
+
+        Instructor instructor =
+                InstructorMapper.toEntity(request, department);
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(
                         InstructorMapper.toResponse(
-                                instructorService.save(
-                                        InstructorMapper.toEntity(request)
-                                )
+                                instructorService.save(instructor)
                         )
                 );
     }

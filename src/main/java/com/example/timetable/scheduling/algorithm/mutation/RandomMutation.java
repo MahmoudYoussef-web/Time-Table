@@ -18,9 +18,9 @@ public class RandomMutation implements MutationStrategy {
 
     @Override
     public void mutate(Chromosome chromosome,
-            List<Room> rooms,
-            List<TimeSlot> slots,
-            double mutationRate) {
+                       List<Room> rooms,
+                       List<TimeSlot> slots,
+                       double mutationRate) {
 
         for (Gene gene : chromosome.getGenes()) {
 
@@ -30,12 +30,18 @@ public class RandomMutation implements MutationStrategy {
 
             if (random.nextDouble() < mutationRate) {
 
-                if (random.nextBoolean()) {
-                    gene.setRoom(
-                            rooms.get(random.nextInt(rooms.size())));
-                } else {
+                // 70% mutate timeslot
+                if (random.nextDouble() < 0.7) {
+
                     gene.setTimeSlot(
-                            slots.get(random.nextInt(slots.size())));
+                            slots.get(random.nextInt(slots.size()))
+                    );
+
+                } else {
+
+                    gene.setRoom(
+                            rooms.get(random.nextInt(rooms.size()))
+                    );
                 }
             }
         }

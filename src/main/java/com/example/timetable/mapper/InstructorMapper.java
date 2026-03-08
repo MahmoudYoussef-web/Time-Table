@@ -2,6 +2,7 @@ package com.example.timetable.mapper;
 
 import com.example.timetable.dto.request.InstructorRequest;
 import com.example.timetable.dto.response.InstructorResponse;
+import com.example.timetable.entity.Department;
 import com.example.timetable.entity.Instructor;
 import com.example.timetable.entity.User;
 import com.example.timetable.entity.enums.UserRole;
@@ -9,25 +10,25 @@ import com.example.timetable.entity.enums.UserRole;
 public class InstructorMapper {
 
     // Convert request DTO to entity
-    public static Instructor toEntity(InstructorRequest request) {
+    public static Instructor toEntity(
+            InstructorRequest request,
+            Department department
+    ) {
 
-        // Create user account
         User user = new User();
 
         user.setFullName(request.name());
         user.setEmail(request.email());
-
-        // Temporary password (should be encoded later)
         user.setPassword("123456");
-
         user.setRole(UserRole.INSTRUCTOR);
         user.setEnabled(true);
 
-        // Create instructor
         Instructor instructor = new Instructor();
         instructor.setUser(user);
 
-        // Link both sides
+        
+        instructor.setDepartment(department);
+
         user.setInstructor(instructor);
 
         return instructor;
@@ -36,11 +37,17 @@ public class InstructorMapper {
     // Convert entity to response DTO
     public static InstructorResponse toResponse(Instructor instructor) {
 
+        String departmentName = null;
+
+        if (instructor.getDepartment() != null) {
+            departmentName = instructor.getDepartment().getName();
+        }
+
         return new InstructorResponse(
                 instructor.getId(),
                 instructor.getUser().getFullName(),
                 instructor.getUser().getEmail(),
-                instructor.getDepartment().getName()
+                departmentName
         );
     }
 }

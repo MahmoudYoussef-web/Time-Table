@@ -1,115 +1,171 @@
 package com.example.timetable.exception;
 
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Validation errors
+    // ===============================
+    // Validation Errors
+    // ===============================
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidation(
+    public ResponseEntity<Map<String, Object>> handleValidation(
             MethodArgumentNotValidException ex
     ) {
 
-        Map<String, String> errors = new HashMap<>();
+        Map<String, String> fieldErrors = new HashMap<>();
 
         for (FieldError field : ex.getBindingResult().getFieldErrors()) {
-            errors.put(field.getField(), field.getDefaultMessage());
+            fieldErrors.put(field.getField(), field.getDefaultMessage());
         }
 
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("errors", fieldErrors);
+
         return ResponseEntity
-                .badRequest()
-                .body(errors);
+                .status(HttpStatus.BAD_REQUEST)
+                .body(response);
     }
 
-    // User not found
+    // ===============================
+    // User Not Found
+    // ===============================
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiError> handleUserNotFound(
-            UserNotFoundException ex
+            UserNotFoundException ex,
+            HttpServletRequest request
     ) {
 
         return buildError(
                 HttpStatus.NOT_FOUND,
-                ex.getMessage()
+                ex.getMessage(),
+                request.getRequestURI()
         );
     }
 
-    // Duplicate user
+    // ===============================
+    // Duplicate User
+    // ===============================
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ApiError> handleUserExists(
-            UserAlreadyExistsException ex
+            UserAlreadyExistsException ex,
+            HttpServletRequest request
     ) {
 
         return buildError(
                 HttpStatus.CONFLICT,
-                ex.getMessage()
+                ex.getMessage(),
+                request.getRequestURI()
         );
     }
 
-    // Invalid credentials
+    // ===============================
+    // Invalid Credentials
+    // ===============================
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ApiError> handleInvalidLogin(
-            InvalidCredentialsException ex
+            InvalidCredentialsException ex,
+            HttpServletRequest request
     ) {
 
         return buildError(
                 HttpStatus.UNAUTHORIZED,
-                ex.getMessage()
+                ex.getMessage(),
+                request.getRequestURI()
         );
     }
 
-    // Illegal arguments
+    // ===============================
+    // Entity Not Found (JPA)
+    // ===============================
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ApiError> handleEntityNotFound(
+            EntityNotFoundException ex,
+            HttpServletRequest request
+    ) {
+
+        return buildError(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
+    // ===============================
+    // Illegal Argument
+    // ===============================
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleIllegal(
-            IllegalArgumentException ex
+            IllegalArgumentException ex,
+            HttpServletRequest request
     ) {
 
         return buildError(
                 HttpStatus.BAD_REQUEST,
-                ex.getMessage()
+                ex.getMessage(),
+                request.getRequestURI()
         );
     }
 
+    // ===============================
+    // Access Denied
+    // ===============================
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(
+            AccessDeniedException ex,
+            HttpServletRequest request
+    ) {
+
+        return buildError(
+                HttpStatus.FORBIDDEN,
+                "You do not have permission to perform this action",
+                request.getRequestURI()
+        );
+    }
+
+    // ===============================
     // Fallback
+    // ===============================
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleOther(Exception ex) {
+    public ResponseEntity<ApiError> handleOther(
+            Exception ex,
+            HttpServletRequest request
+    ) {
 
         return buildError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                "Internal server error"
+                "Internal server error",
+                request.getRequestURI()
         );
     }
 
-    // Build standardized error response
+    // ===============================
+    // Build Standard Error
+    // ===============================
     private ResponseEntity<ApiError> buildError(
             HttpStatus status,
-            String message
+            String message,
+            String path
     ) {
 
         ApiError error = new ApiError(
                 status.value(),
                 message,
-                LocalDateTime.now()
+                path
         );
 
         return new ResponseEntity<>(error, status);
-    }
-    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
-    public ResponseEntity<ApiError> handleAccessDenied(
-            org.springframework.security.access.AccessDeniedException ex
-    ) {
-        return buildError(
-                HttpStatus.FORBIDDEN,
-                "You do not have permission to perform this action"
-        );
     }
 }

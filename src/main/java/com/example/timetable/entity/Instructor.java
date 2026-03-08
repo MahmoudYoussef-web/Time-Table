@@ -1,5 +1,6 @@
 package com.example.timetable.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,21 +18,22 @@ public class Instructor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(length = 150)
     private String specialization;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "department_id", nullable = false)
     private Department department;
-
     @OneToMany(mappedBy = "instructor", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Section> sections;
 
     @OneToMany(mappedBy = "instructor", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<ScheduleEntry> scheduleEntries;
 
     @OneToMany(mappedBy = "instructor",

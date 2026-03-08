@@ -2,7 +2,7 @@ package com.example.timetable.scheduling.algorithm;
 
 import com.example.timetable.scheduling.algorithm.config.FitnessProperties;
 import com.example.timetable.scheduling.constraints.HardConstraint;
-import com.example.timetable.scheduling.constraints.SoftConstraint;
+import com.example.timetable.scheduling.constraints.soft.SoftConstraint;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -32,18 +32,25 @@ public class FitnessCalculator {
         for (Chromosome chromosome : population) {
 
             int hardViolations = 0;
+
             for (HardConstraint constraint : hardConstraints) {
                 hardViolations += constraint.violations(chromosome);
             }
 
             int softViolations = 0;
+            double softPenalty = 0;
+
             for (SoftConstraint constraint : softConstraints) {
-                softViolations += constraint.violations(chromosome);
+
+                int violations = constraint.violations(chromosome);
+
+                softViolations += violations;
+                softPenalty += violations * constraint.weight();
             }
 
             double penalty =
                     (hardViolations * hardWeight)
-                            + (softViolations * softWeight);
+                            + (softPenalty * softWeight);
 
             double fitness = Math.exp(-penalty);
 

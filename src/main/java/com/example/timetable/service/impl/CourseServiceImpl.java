@@ -31,6 +31,11 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public Course save(Course course) {
+
+        if (courseRepository.existsByCode(course.getCode())) {
+            throw new IllegalArgumentException("Course code already exists");
+        }
+
         return courseRepository.save(course);
     }
 
@@ -43,4 +48,5 @@ public class CourseServiceImpl implements CourseService {
 
         courseRepository.deleteById(id);
     }
+
 }

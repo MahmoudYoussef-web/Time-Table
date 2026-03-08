@@ -1,5 +1,6 @@
 package com.example.timetable.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -40,6 +41,7 @@ public class Section {
 
     // Schedule entries of this section
     @OneToMany(mappedBy = "section", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<ScheduleEntry> scheduleEntries;
 
     // Exams of this section
