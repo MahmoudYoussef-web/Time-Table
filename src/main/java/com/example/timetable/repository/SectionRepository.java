@@ -16,4 +16,6 @@ public interface SectionRepository
 
     // Get all sections in a department
     List<Section> findByCourseDepartmentId(Long departmentId);
+
+    List<Section> findBySemester_Id(Long semesterId);
 }

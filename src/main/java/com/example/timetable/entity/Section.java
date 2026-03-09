@@ -46,4 +46,8 @@ public class Section {
     @OneToMany(mappedBy = "section", fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Announcement> announcements;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "semester_id", nullable = false)
+    private Semester semester;
 }

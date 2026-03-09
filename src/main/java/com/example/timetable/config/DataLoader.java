@@ -3,13 +3,13 @@ package com.example.timetable.config;
 import com.example.timetable.entity.*;
 import com.example.timetable.entity.enums.UserRole;
 import com.example.timetable.repository.*;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Configuration
@@ -24,6 +24,7 @@ public class DataLoader implements CommandLineRunner {
     private final SectionRepository sectionRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SemesterRepository semesterRepository;
 
     @Override
     public void run(String... args) {
@@ -44,7 +45,7 @@ public class DataLoader implements CommandLineRunner {
         User u1 = new User();
         u1.setFullName("Dr. Ahmed");
         u1.setEmail("ahmed@uni.edu");
-        u1.setPassword(passwordEncoder.encode("123456")); // ✅ FIX
+        u1.setPassword(passwordEncoder.encode("123456"));
         u1.setRole(UserRole.INSTRUCTOR);
         u1.setEnabled(true);
         userRepository.save(u1);
@@ -52,7 +53,7 @@ public class DataLoader implements CommandLineRunner {
         User u2 = new User();
         u2.setFullName("Dr. Sara");
         u2.setEmail("sara@uni.edu");
-        u2.setPassword(passwordEncoder.encode("123456")); // ✅ FIX
+        u2.setPassword(passwordEncoder.encode("123456"));
         u2.setRole(UserRole.INSTRUCTOR);
         u2.setEnabled(true);
         userRepository.save(u2);
@@ -112,6 +113,13 @@ public class DataLoader implements CommandLineRunner {
         t2.setStartTime(LocalTime.of(11, 0));
         t2.setEndTime(LocalTime.of(13, 0));
         timeSlotRepository.save(t2);
+        /* ===== Semester ===== */
+
+        Semester semester = new Semester();
+        semester.setName("Spring 2026");
+        semester.setStartDate(LocalDate.of(2026, 2, 1));
+        semester.setEndDate(LocalDate.of(2026, 6, 1));
+        semesterRepository.save(semester);
 
         /* ===== Sections ===== */
 
@@ -120,6 +128,7 @@ public class DataLoader implements CommandLineRunner {
         s1.setCourse(c1);
         s1.setInstructor(i1);
         s1.setCapacity(35);
+        s1.setSemester(semester);
         sectionRepository.save(s1);
 
         Section s2 = new Section();
@@ -127,6 +136,7 @@ public class DataLoader implements CommandLineRunner {
         s2.setCourse(c2);
         s2.setInstructor(i2);
         s2.setCapacity(40);
+        s2.setSemester(semester);
         sectionRepository.save(s2);
 
         System.out.println("✅ Seed data loaded successfully");

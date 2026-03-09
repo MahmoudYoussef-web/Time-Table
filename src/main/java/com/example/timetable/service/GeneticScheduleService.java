@@ -30,7 +30,13 @@ public class GeneticScheduleService {
         Semester semester = semesterRepository.findById(semesterId)
                 .orElseThrow(() -> new NoSuchElementException("Semester not found"));
 
-        List<Section> sections = sectionRepository.findAll();
+        List<Section> sections =
+                sectionRepository.findBySemester_Id(semesterId);
+
+        if (sections.isEmpty()) {
+            throw new IllegalStateException(
+                    "No sections found for this semester");
+        }
         List<Room> rooms = roomRepository.findAll();
         List<TimeSlot> slots = timeSlotRepository.findAll();
 
