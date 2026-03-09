@@ -17,9 +17,12 @@ import com.example.timetable.scheduling.constraints.ConstraintViolation;
 import com.example.timetable.service.ConflictEvaluationService;
 import com.example.timetable.service.GeneticScheduleService;
 import com.example.timetable.service.ScheduleService;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -36,38 +39,41 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final SemesterRepository semesterRepository;
     private final GeneticScheduleService geneticScheduleService;
     private final ScheduleGenerationJobRepository jobRepository;
-    private final ThreadPoolTaskExecutor taskExecutor;
     private final ConflictEvaluationService conflictEvaluationService;
+
+    private static final Logger log =
+            LoggerFactory.getLogger(ScheduleServiceImpl.class);
+
     @Override
     public UUID generateScheduleAsync(Long semesterId) {
 
         Semester semester = semesterRepository.findById(semesterId)
                 .orElseThrow(() -> new NoSuchElementException("Semester not found"));
 
-        if (semester.getStatus() == SemesterStatus.CLOSED) {
+        if (semester.getStatus() == SemesterStatus.CLOSED)
             throw new IllegalStateException("Cannot generate schedule for closed semester");
-        }
 
         ScheduleGenerationJob job = new ScheduleGenerationJob();
         job.setId(UUID.randomUUID());
         job.setStatus(JobStatus.RUNNING);
+
         jobRepository.save(job);
 
-        taskExecutor.execute(() -> {
-            try {
+        try {
 
-                Schedule schedule = geneticScheduleService.generate(semesterId);
+            Schedule schedule =
+                    geneticScheduleService.generate(semesterId);
 
-                job.setScheduleId(schedule.getId());
-                job.setStatus(JobStatus.COMPLETED);
-                jobRepository.save(job);
+            job.setScheduleId(schedule.getId());
+            job.setStatus(JobStatus.COMPLETED);
 
-            } catch (Exception e) {
+        } catch (Exception e) {
 
-                job.setStatus(JobStatus.FAILED);
-                jobRepository.save(job);
-            }
-        });
+            log.error("Schedule generation failed", e);
+            job.setStatus(JobStatus.FAILED);
+        }
+
+        jobRepository.save(job);
 
         return job.getId();
     }
@@ -85,6 +91,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public ScheduleDTO validateSchedule(Long id) {
+
         Schedule schedule = getScheduleEntity(id);
 
         if (schedule.getStatus() != ScheduleStatus.DRAFT)
@@ -94,11 +101,13 @@ public class ScheduleServiceImpl implements ScheduleService {
             throw new IllegalStateException("Cannot validate schedule with hard violations");
 
         schedule.setStatus(ScheduleStatus.VALIDATED);
+
         return ScheduleMapper.toDTO(schedule);
     }
 
     @Override
     public ScheduleDTO publishSchedule(Long id) {
+
         Schedule schedule = getScheduleEntity(id);
 
         if (schedule.getStatus() != ScheduleStatus.VALIDATED)
@@ -107,28 +116,33 @@ public class ScheduleServiceImpl implements ScheduleService {
         boolean exists = scheduleRepository
                 .existsBySemesterIdAndStatus(
                         schedule.getSemester().getId(),
-                        ScheduleStatus.PUBLISHED);
+                        ScheduleStatus.PUBLISHED
+                );
 
         if (exists)
             throw new IllegalStateException("Another schedule already published");
 
         schedule.setStatus(ScheduleStatus.PUBLISHED);
+
         return ScheduleMapper.toDTO(schedule);
     }
 
     @Override
     public ScheduleDTO lockSchedule(Long id) {
+
         Schedule schedule = getScheduleEntity(id);
 
         if (schedule.getStatus() != ScheduleStatus.PUBLISHED)
             throw new IllegalStateException("Only published schedule can be locked");
 
         schedule.setStatus(ScheduleStatus.LOCKED);
+
         return ScheduleMapper.toDTO(schedule);
     }
 
     @Override
     public ScheduleDTO getByInstructor(Long instructorId) {
+
         Schedule latest = scheduleRepository
                 .findTopByStatusOrderByCreatedAtDesc(ScheduleStatus.PUBLISHED)
                 .orElseThrow();
@@ -136,9 +150,12 @@ public class ScheduleServiceImpl implements ScheduleService {
         List<ScheduleEntry> entries =
                 scheduleEntryRepository
                         .findByScheduleIdAndSectionInstructorId(
-                                latest.getId(), instructorId);
+                                latest.getId(),
+                                instructorId
+                        );
 
         latest.setEntries(entries);
+
         return ScheduleMapper.toDTO(latest);
     }
 
@@ -156,9 +173,11 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     private Schedule getScheduleEntity(Long id) {
+
         return scheduleRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Schedule not found"));
     }
+
     @Override
     public List<ConstraintViolation> getConflicts(Long scheduleId) {
 

@@ -23,7 +23,7 @@ public class DataLoader implements CommandLineRunner {
     private final TimeSlotRepository timeSlotRepository;
     private final SectionRepository sectionRepository;
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder; // ✅ أضفنا ده
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {

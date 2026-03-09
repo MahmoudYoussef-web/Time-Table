@@ -3,7 +3,10 @@ package com.example.timetable.service.impl;
 import com.example.timetable.entity.TimeSlot;
 import com.example.timetable.repository.TimeSlotRepository;
 import com.example.timetable.service.TimeSlotService;
+
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +34,20 @@ public class TimeSlotServiceImpl implements TimeSlotService {
 
     @Override
     public TimeSlot save(TimeSlot timeSlot) {
-        return timeSlotRepository.save(timeSlot);
+
+        try {
+            return timeSlotRepository.save(timeSlot);
+        } catch (DataIntegrityViolationException ex) {
+
+            throw new IllegalArgumentException(
+                    "This time slot already exists: "
+                            + timeSlot.getDay()
+                            + " "
+                            + timeSlot.getStartTime()
+                            + " - "
+                            + timeSlot.getEndTime()
+            );
+        }
     }
 
     @Override

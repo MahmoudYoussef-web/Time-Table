@@ -17,16 +17,9 @@ public class SectionMapper {
 
         Section section = new Section();
 
-        // Set section name
         section.setName(request.name());
-
-        // Set course
         section.setCourse(course);
-
-        // Set instructor
         section.setInstructor(instructor);
-
-        // Set capacity
         section.setCapacity(request.capacity());
 
         return section;
@@ -35,12 +28,23 @@ public class SectionMapper {
     // Convert entity to response
     public static SectionResponse toResponse(Section section) {
 
+        String instructorName = null;
+
+        if (section.getInstructor() != null
+                && section.getInstructor().getUser() != null) {
+
+            instructorName =
+                    section.getInstructor()
+                            .getUser()
+                            .getFullName();
+        }
+
         return new SectionResponse(
                 section.getId(),
                 section.getName(),
                 section.getCourse().getCode(),
                 section.getCourse().getName(),
-                section.getInstructor().getUser().getFullName(),
+                instructorName,
                 section.getCapacity()
         );
     }

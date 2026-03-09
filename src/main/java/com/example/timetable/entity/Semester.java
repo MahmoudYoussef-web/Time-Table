@@ -1,6 +1,7 @@
 package com.example.timetable.entity;
 
 import com.example.timetable.entity.enums.SemesterStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -39,14 +40,17 @@ public class Semester {
             cascade = CascadeType.ALL,
             orphanRemoval = true,
             fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Schedule> schedules = new ArrayList<>();
 
     @PrePersist
     @PreUpdate
     private void validateDates() {
+
         if (startDate == null || endDate == null) {
             throw new IllegalStateException("Semester dates must not be null");
         }
+
         if (endDate.isBefore(startDate)) {
             throw new IllegalStateException("Semester end date must be after start date");
         }
