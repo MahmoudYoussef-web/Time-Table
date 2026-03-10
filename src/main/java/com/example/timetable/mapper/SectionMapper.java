@@ -5,14 +5,15 @@ import com.example.timetable.dto.response.SectionResponse;
 import com.example.timetable.entity.Course;
 import com.example.timetable.entity.Instructor;
 import com.example.timetable.entity.Section;
+import com.example.timetable.entity.Semester;
 
 public class SectionMapper {
 
-    // Convert request to entity
     public static Section toEntity(
             SectionRequest request,
             Course course,
-            Instructor instructor
+            Instructor instructor,
+            Semester semester
     ) {
 
         Section section = new Section();
@@ -20,12 +21,12 @@ public class SectionMapper {
         section.setName(request.name());
         section.setCourse(course);
         section.setInstructor(instructor);
+        section.setSemester(semester);
         section.setCapacity(request.capacity());
 
         return section;
     }
 
-    // Convert entity to response
     public static SectionResponse toResponse(Section section) {
 
         String instructorName = null;

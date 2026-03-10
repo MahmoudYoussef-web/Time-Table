@@ -12,6 +12,8 @@ public record ScheduleEntryDTO(
 
         String roomNumber,
 
+        String departmentName,
+
         String dayOfWeek,
 
         String startTime,
@@ -22,5 +24,4 @@ public record ScheduleEntryDTO(
 
         int softViolations
 
-) {
-}
+) {}

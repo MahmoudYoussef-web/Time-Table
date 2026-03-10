@@ -6,12 +6,16 @@ import com.example.timetable.dto.response.SlotDTO;
 import com.example.timetable.dto.response.WeeklyScheduleDTO;
 import com.example.timetable.mapper.WeeklyScheduleMapper;
 import com.lowagie.text.*;
+import com.lowagie.text.Font;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import org.springframework.stereotype.Service;
 
+import java.awt.*;
 import java.io.ByteArrayOutputStream;
+import java.util.*;
+import java.util.List;
 
 @Service
 public class SchedulePdfService {
@@ -20,21 +24,21 @@ public class SchedulePdfService {
 
         try {
 
-            WeeklyScheduleDTO weekly =
-                    WeeklyScheduleMapper.toWeeklyTable(schedule);
-
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            Map<String, WeeklyScheduleDTO> departmentTables =
+                    WeeklyScheduleMapper.toDepartmentTables(schedule);
 
             Document document = new Document(PageSize.A4.rotate());
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
 
             PdfWriter.getInstance(document, out);
 
             document.open();
 
-            Font titleFont = new Font(Font.HELVETICA, 18, Font.BOLD);
-            Font infoFont = new Font(Font.HELVETICA, 12);
+            Font titleFont = new Font(Font.HELVETICA, 20, Font.BOLD);
+            Font sectionFont = new Font(Font.HELVETICA, 16, Font.BOLD);
             Font headerFont = new Font(Font.HELVETICA, 12, Font.BOLD);
-            Font cellFont = new Font(Font.HELVETICA, 11);
+            Font cellFont = new Font(Font.HELVETICA, 10);
 
             Paragraph title =
                     new Paragraph("University Weekly Timetable", titleFont);
@@ -44,59 +48,27 @@ public class SchedulePdfService {
             document.add(title);
             document.add(Chunk.NEWLINE);
 
-            document.add(new Paragraph("Schedule ID: " + schedule.getId(), infoFont));
-            document.add(new Paragraph("Created At: " + schedule.getCreatedAt(), infoFont));
-            document.add(new Paragraph("Hard Violations: " + schedule.getHardViolations(), infoFont));
-            document.add(new Paragraph("Soft Violations: " + schedule.getSoftViolations(), infoFont));
-            document.add(new Paragraph("Fitness Score: " + schedule.getFitnessScore(), infoFont));
+            for (var entry : departmentTables.entrySet()) {
 
-            document.add(Chunk.NEWLINE);
+                String department = entry.getKey();
+                WeeklyScheduleDTO weekly = entry.getValue();
 
-            PdfPTable table = new PdfPTable(5);
+                Paragraph sectionTitle =
+                        new Paragraph(
+                                department + " (SEM 1)",
+                                sectionFont
+                        );
 
-            table.setWidthPercentage(100);
+                sectionTitle.setSpacingBefore(15);
+                sectionTitle.setSpacingAfter(10);
 
-            table.addCell(header("Day", headerFont));
-            table.addCell(header("Course", headerFont));
-            table.addCell(header("Instructor", headerFont));
-            table.addCell(header("Room", headerFont));
-            table.addCell(header("Time", headerFont));
+                document.add(sectionTitle);
 
-            for (DayScheduleDTO day : weekly.days()) {
+                PdfPTable table =
+                        buildTable(weekly, headerFont, cellFont);
 
-                for (SlotDTO slot : day.slots()) {
-
-                    if (slot.entry() == null) continue;
-
-                    table.addCell(cell(day.day(), cellFont));
-
-                    table.addCell(cell(
-                            slot.entry().courseCode() +
-                                    " - " +
-                                    slot.entry().courseName(),
-                            cellFont
-                    ));
-
-                    table.addCell(cell(
-                            slot.entry().instructorName(),
-                            cellFont
-                    ));
-
-                    table.addCell(cell(
-                            slot.entry().roomNumber(),
-                            cellFont
-                    ));
-
-                    String time =
-                            slot.startTime() +
-                                    " - " +
-                                    slot.endTime();
-
-                    table.addCell(cell(time, cellFont));
-                }
+                document.add(table);
             }
-
-            document.add(table);
 
             document.close();
 
@@ -105,11 +77,82 @@ public class SchedulePdfService {
         } catch (Exception e) {
 
             throw new RuntimeException("Failed to generate schedule PDF", e);
-
         }
     }
 
-    private PdfPCell header(String text, Font font) {
+
+    private PdfPTable buildTable(
+            WeeklyScheduleDTO weekly,
+            Font headerFont,
+            Font cellFont
+    ) {
+
+        Set<String> timeRanges = new TreeSet<>();
+
+        for (DayScheduleDTO day : weekly.days()) {
+
+            for (SlotDTO slot : day.slots()) {
+
+                String range =
+                        slot.startTime() + "-" + slot.endTime();
+
+                timeRanges.add(range);
+            }
+        }
+
+        List<String> orderedTimes =
+                new ArrayList<>(timeRanges);
+
+        PdfPTable table =
+                new PdfPTable(orderedTimes.size() + 1);
+
+        table.setWidthPercentage(100);
+
+        table.addCell(header("Day", headerFont));
+
+        for (String time : orderedTimes) {
+
+            table.addCell(header(time, headerFont));
+        }
+
+        for (DayScheduleDTO day : weekly.days()) {
+
+            table.addCell(header(day.day(), headerFont));
+
+            Map<String, SlotDTO> slotMap = new HashMap<>();
+
+            for (SlotDTO slot : day.slots()) {
+
+                String key =
+                        slot.startTime() + "-" + slot.endTime();
+
+                slotMap.put(key, slot);
+            }
+
+            for (String time : orderedTimes) {
+
+                SlotDTO slot = slotMap.get(time);
+
+                if (slot == null || slot.entry() == null) {
+
+                    table.addCell(cell("", cellFont));
+
+                } else {
+
+                    String text =
+                            slot.entry().courseCode()
+                                    + "\n"
+                                    + slot.entry().instructorName()
+                                    + "\n"
+                                    + slot.entry().roomNumber();
+
+                    table.addCell(cell(text, cellFont));
+                }
+            }
+        }
+
+        return table;
+    }private PdfPCell header(String text, Font font) {
 
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
 
@@ -117,8 +160,11 @@ public class SchedulePdfService {
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         cell.setPadding(8);
 
+        cell.setBackgroundColor(Color.LIGHT_GRAY);
+
         return cell;
     }
+
 
     private PdfPCell cell(String text, Font font) {
 

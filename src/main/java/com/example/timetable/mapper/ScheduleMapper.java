@@ -43,16 +43,37 @@ public class ScheduleMapper {
             ScheduleEntry entry) {
 
         return new ScheduleEntryDTO(
+
                 entry.getSection().getId(),
+
                 entry.getSection().getCourse().getCode(),
+
                 entry.getSection().getCourse().getName(),
-                entry.getSection().getInstructor()
+
+                entry.getSection()
+                        .getInstructor()
                         .getUser()
                         .getFullName(),
+
                 entry.getRoom().getRoomNumber(),
-                entry.getTimeSlot().getDay().name(),
-                entry.getTimeSlot().getStartTime().toString(),
-                entry.getTimeSlot().getEndTime().toString(),
+
+                entry.getSection()
+                        .getCourse()
+                        .getDepartment()
+                        .getName(),
+
+                entry.getTimeSlot()
+                        .getDay()
+                        .name(),
+
+                entry.getTimeSlot()
+                        .getStartTime()
+                        .toString(),
+
+                entry.getTimeSlot()
+                        .getEndTime()
+                        .toString(),
+
                 0,
                 0
         );
