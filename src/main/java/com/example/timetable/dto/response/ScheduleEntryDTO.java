@@ -4,6 +4,8 @@ public record ScheduleEntryDTO(
 
         Long sectionId,
 
+        String sectionName,
+
         String courseCode,
 
         String courseName,

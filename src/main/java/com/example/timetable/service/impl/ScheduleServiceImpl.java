@@ -70,6 +70,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         } catch (Exception e) {
 
             log.error("Schedule generation failed", e);
+            e.printStackTrace();
             job.setStatus(JobStatus.FAILED);
         }
 

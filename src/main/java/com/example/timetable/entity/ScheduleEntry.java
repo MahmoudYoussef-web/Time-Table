@@ -47,7 +47,7 @@ public class ScheduleEntry {
         @Column(nullable = false, length = 30)
         private String type;
 
-        // 🔒 Prevent GA from moving this entry
+        //  Prevent GA from moving this entry
         @Column(nullable = false)
         private boolean locked = false;
 

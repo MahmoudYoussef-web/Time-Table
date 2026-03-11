@@ -10,8 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Propagation;
 
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -30,18 +32,16 @@ public class GeneticScheduleService {
         Semester semester = semesterRepository.findById(semesterId)
                 .orElseThrow(() -> new NoSuchElementException("Semester not found"));
 
-        List<Section> sections =
-                sectionRepository.findBySemester_Id(semesterId);
+        List<Section> sections = sectionRepository.findBySemester_Id(semesterId);
 
         if (sections.isEmpty()) {
-            throw new IllegalStateException(
-                    "No sections found for this semester");
+            throw new IllegalStateException("No sections found for this semester");
         }
+
         List<Room> rooms = roomRepository.findAll();
         List<TimeSlot> slots = timeSlotRepository.findAll();
 
-        Chromosome best =
-                geneticAlgorithm.evolve(sections, rooms, slots);
+        Chromosome best = geneticAlgorithm.evolve(sections, rooms, slots);
 
         Schedule schedule = new Schedule();
         schedule.setSemester(semester);
@@ -49,22 +49,46 @@ public class GeneticScheduleService {
         schedule.setHardViolations(best.getHardViolations());
         schedule.setSoftViolations(best.getSoftViolations());
 
+        schedule.setEntries(new ArrayList<>());
+
+        Set<String> instructorSlot = new HashSet<>();
+        Set<String> roomSlot = new HashSet<>();
+        Set<String> sectionSlot = new HashSet<>();
+
         for (Gene gene : best.getGenes()) {
+
+            Instructor instructor = gene.getSection().getInstructor();
+            Room room = gene.getRoom();
+            TimeSlot slot = gene.getTimeSlot();
+            Section section = gene.getSection();
+
+            String instructorKey = instructor.getId() + "-" + slot.getId();
+            String roomKey = room.getId() + "-" + slot.getId();
+            String sectionKey = section.getId() + "-" + slot.getId();
+
+            if (instructorSlot.contains(instructorKey)) {
+                continue;
+            }
+
+            if (roomSlot.contains(roomKey)) {
+                continue;
+            }
+
+            if (sectionSlot.contains(sectionKey)) {
+                continue;
+            }
+
+            instructorSlot.add(instructorKey);
+            roomSlot.add(roomKey);
+            sectionSlot.add(sectionKey);
 
             ScheduleEntry entry = new ScheduleEntry();
 
             entry.setSchedule(schedule);
-            entry.setSection(gene.getSection());
-
-
-            entry.setInstructor(
-                    gene.getSection().getInstructor()
-            );
-
-            entry.setRoom(gene.getRoom());
-            entry.setTimeSlot(gene.getTimeSlot());
-
-
+            entry.setSection(section);
+            entry.setInstructor(instructor);
+            entry.setRoom(room);
+            entry.setTimeSlot(slot);
             entry.setType("LECTURE");
 
             schedule.getEntries().add(entry);

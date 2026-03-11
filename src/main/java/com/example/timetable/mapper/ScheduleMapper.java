@@ -46,6 +46,8 @@ public class ScheduleMapper {
 
                 entry.getSection().getId(),
 
+                entry.getSection().getName(),
+
                 entry.getSection().getCourse().getCode(),
 
                 entry.getSection().getCourse().getName(),
@@ -78,4 +80,4 @@ public class ScheduleMapper {
                 0
         );
     }
-}
+    }

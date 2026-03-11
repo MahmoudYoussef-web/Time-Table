@@ -10,7 +10,6 @@ public class WeeklyScheduleMapper {
 
     public static WeeklyScheduleDTO toWeeklyTable(ScheduleDTO schedule) {
 
-        // Collect ALL time ranges
         Set<String> timeRanges =
                 schedule.getEntries()
                         .stream()
@@ -68,21 +67,51 @@ public class WeeklyScheduleMapper {
 
         return new WeeklyScheduleDTO(days);
     }
-    public static Map<String, WeeklyScheduleDTO> toDepartmentTables(
+
+
+    public static Map<String, WeeklyScheduleDTO> toLevelTables(
             ScheduleDTO schedule
     ) {
 
-        Map<String, List<ScheduleEntryDTO>> byDepartment =
+        Map<String, List<ScheduleEntryDTO>> byLevel =
                 schedule.getEntries()
                         .stream()
-                        .collect(Collectors.groupingBy(
-                                ScheduleEntryDTO::departmentName
-                        ));
+                        .collect(Collectors.groupingBy(e -> {
+
+                            String section = e.sectionName();
+
+                            if (section.startsWith("L1"))
+                                return "First Year";
+
+                            if (section.startsWith("L2"))
+                                return "Second Year";
+
+                            if (section.startsWith("L3"))
+                                return "Third Year";
+
+                            if (section.startsWith("L4"))
+                                return "Fourth Year";
+
+                            return "Other";
+                        }));
+
+
+        List<String> orderedLevels = List.of(
+                "First Year",
+                "Second Year",
+                "Third Year",
+                "Fourth Year"
+        );
 
         Map<String, WeeklyScheduleDTO> result =
                 new LinkedHashMap<>();
 
-        for (var entry : byDepartment.entrySet()) {
+        for (String level : orderedLevels) {
+
+            List<ScheduleEntryDTO> entries = byLevel.get(level);
+
+            if (entries == null || entries.isEmpty())
+                continue;
 
             ScheduleDTO subSchedule =
                     new ScheduleDTO(
@@ -92,13 +121,10 @@ public class WeeklyScheduleMapper {
                             schedule.getSoftViolations(),
                             schedule.getStatus(),
                             schedule.getCreatedAt(),
-                            entry.getValue()
+                            entries
                     );
 
-            result.put(
-                    entry.getKey(),
-                    toWeeklyTable(subSchedule)
-            );
+            result.put(level, toWeeklyTable(subSchedule));
         }
 
         return result;
