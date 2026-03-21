@@ -1,236 +1,224 @@
+# University Timetable Scheduler Backend (Smart Scheduling System)
 
+This project is a backend system for generating optimized university timetables. It handles scheduling constraints, conflict detection, and automatic timetable generation.
 
-## 📌 Project Overview
-
-This project is a **secure RESTful backend system** designed to automatically generate optimized university timetables.
-
-The system combines:
-- Genetic Algorithm–based optimization
-- Strong constraint validation
-- JWT-based authentication and authorization
-- Clean layered architecture
-- Fully documented REST APIs using Swagger
-
-The generated schedules are **conflict-free**, **feasible**, and **optimized**, making the system suitable for academic and real-world scheduling environments.
+The goal of this project was to build a complex scheduling system that simulates real-world university constraints such as instructor availability, room capacity, and time slot conflicts.
 
 ---
 
-## 🧠 Problem Description
+## Complete Tech Stack
 
-University timetabling is a classical **NP-Hard optimization problem** that involves assigning:
-- Courses
-- Instructors
-- Rooms
-- Time slots
-
-while satisfying multiple institutional constraints.
-
-Manual scheduling is time-consuming, error-prone, difficult to optimize, and does not scale well.  
-This system automates the process while ensuring correctness and quality.
-
----
-
-## 🎯 Key Features
-
-- Automated timetable generation using Genetic Algorithm
-- Strict enforcement of hard constraints
-- Optimization of soft constraints
-- Stateless JWT-based security
-- Role-based access control
-- DTO-based API design
-- Swagger UI with authorization support
-- In-memory database for development
-- Automatic seed data initialization
+* Java 21+
+* Spring Boot
+* Spring Data JPA (Hibernate)
+* Spring Security
+* JWT Authentication
+* MySQL Database
+* Maven
+* Lombok
+* MapStruct
+* Swagger / OpenAPI
 
 ---
 
-## 🏗️ System Architecture
+## Architecture
 
-The application follows a **layered architecture** with clear separation of concerns.
+The project follows a clean layered architecture:
 
----
+Controller → Service → Repository → Entity
 
-## 🧩 Package Responsibilities
-
-| Package | Responsibility |
-|------|--------------|
-| `controller` | Exposes REST API endpoints |
-| `service` | Business logic and orchestration |
-| `ga` | Genetic Algorithm implementation |
-| `model` | JPA entities (domain layer) |
-| `dto` | Request and response data transfer objects |
-| `repository` | Database access using Spring Data JPA |
-| `auth` | Authentication and authorization logic |
-| `config` | Security, Swagger, and initialization configuration |
-| `mapper` | Entity to DTO mapping |
+Includes a scheduling engine responsible for generating optimized timetables based on constraints.
 
 ---
 
-## 🔐 Security Architecture
+## Core Features
 
-The system uses **JWT (JSON Web Token)** for stateless authentication.
+### Authentication
 
-### Authentication Flow
-1. User registers or logs in
-2. Credentials are validated
-3. A signed JWT token is generated
-4. The token is returned to the client
-5. Client sends the token in the `Authorization` header
-6. Requests are authenticated via a JWT filter
-
-### Authorization
-- Role-based access (`ADMIN`, `SCHEDULER`, `INSTRUCTOR`)
-- Secured endpoints require a valid JWT
-- Public endpoints:
-  - `/api/auth/**`
-  - `/swagger-ui/**`
-  - `/v3/api-docs/**`
-  - `/h2-console/**`
+* Register / Login
+* JWT-based authentication
+* Role-based access (Admin / Instructor)
 
 ---
 
-## 🔑 Default Admin Initialization
+### Academic Management
 
-A default admin user is automatically created at application startup to ensure system accessibility during development.
-
-- Passwords are securely hashed
-- Duplicate creation is prevented by email checks
-
----
-
-## 🧾 DTO-Based API Design
-
-The project separates:
-- Persistence models (Entities)
-- API contracts (DTOs)
-
-### Benefits
-- Prevents exposing internal database structure
-- Protects sensitive fields
-- Improves API stability
-- Allows flexible response shaping
+* Courses management
+* Departments management
+* Instructors management
+* Rooms management
+* Sections management
+* Semesters management
 
 ---
 
-## 🧬 Genetic Algorithm Overview
+### Time Slots
 
-The Genetic Algorithm is responsible for schedule optimization.
-
-### Core Operations
-- Initial population generation
-- Tournament selection
-- Crossover
-- Mutation
-- Elitism
-- Early stopping condition
-
-### Constraint Handling
-
-#### Hard Constraints
-- No instructor teaches multiple classes at the same time
-- No room conflicts
-- Room capacity must be sufficient
-- No overlapping time slots
-
-#### Soft Constraints
-- Minimize instructor idle gaps
-- Reduce back-to-back lectures
-- Improve schedule distribution
+* Create and manage time slots
+* Define working days and hours
 
 ---
 
-## 📈 Fitness Evaluation
+### Smart Scheduling Engine 
 
-Fitness is calculated as:
+* Generate schedule automatically
+* Assign:
 
+  * Instructor
+  * Room
+  * Time slot
+* Respect constraints:
+
+  * Instructor availability
+  * Room capacity
+  * Section conflicts
+
+---
+
+### Conflict Detection
+
+* Detect scheduling conflicts
+* Return violations:
+
+  * Hard constraints
+  * Soft constraints
+
+---
+
+### Schedule Export
+
+* Export schedule as:
+
+  * PDF
+  * Excel
+
+---
+
+### Async Job Processing
+
+* Schedule generation runs as a background job
+* Track job status (RUNNING / COMPLETED)
+
+---
+
+### Weekly Schedule View
+
+* View structured weekly timetable
+* Grouped by days and time slots
+
+---
+
+## Database Design
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/dd3c265a-80e5-475e-b4cc-854a987beb13" width="900"/>
+</p>
+
+This diagram represents the relational database design including courses, instructors, rooms, schedules, constraints, and timetable entries.
+
+---
+
+## REST API Overview
+
+All endpoints are prefixed with:
+
+```id="m1gk8c"
+/api
 ```
 
-Fitness = exp(-(HardViolations × HardWeight + SoftViolations × SoftWeight))
+---
 
-```
+### Scheduling
 
-- Hard constraints dominate evaluation
-- Soft constraints guide optimization
-- Fitness values range between 0 and 1
+* POST /schedules/generate/{semesterId}
+* GET /schedules/jobs/{jobId}
+* GET /schedules/{id}/conflicts
+* GET /schedules/{id}/pdf
+* GET /schedules/{id}/excel
 
 ---
 
-## 🌐 API Documentation (Swagger)
+### Weekly View
 
-All APIs are documented using Swagger / OpenAPI.
-
-### Access Swagger UI
-```
-
-[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-
-```
-
-Features:
-- Interactive API testing
-- JWT Authorize button
-- Full request/response schemas
+* GET /weekly-schedules/{id}
+* GET /instructor/schedule/my
 
 ---
 
-## 🧪 Database Configuration
+### Core Resources
 
-The application uses **H2 In-Memory Database** for development.
-
-### H2 Console
-```
-
-[http://localhost:8080/h2-console](http://localhost:8080/h2-console)
-
-```
-```
-
-JDBC URL: jdbc:h2:mem:timetabledb
-Username: sa
-Password: (empty)
-
-````
-
-> Data is cleared when the application stops.
+* /courses
+* /instructors
+* /rooms
+* /sections
+* /semesters
+* /timeslots
 
 ---
 
-## ▶️ Running the Application
+### Auth
 
-### Requirements
-- Java 17+
-- Maven
+* POST /auth/register
+* POST /auth/login
 
-### Run Commands
-```bash
-mvn clean install
+---
+
+## Key Highlights
+
+* Complex scheduling algorithm
+* Constraint-based system design
+* Conflict detection engine
+* Async processing with job tracking
+* Real-world academic system simulation
+* Clean architecture and modular design
+
+---
+
+## How to Run
+
+1. Clone the repository
+
+2. Configure application.properties
+
+```properties id="s3gk9l"
+spring.datasource.url=jdbc:mysql://localhost:3306/timetable_db
+spring.datasource.username=your_user
+spring.datasource.password=your_password
+
+spring.jpa.hibernate.ddl-auto=update
+
+auth.jwt.secret=YOUR_SECRET
+auth.jwt.expiration=3600000
+```
+
+3. Run the project
+
+```bash id="x8p2kq"
 mvn spring-boot:run
-````
-
-Application runs on:
-
 ```
-http://localhost:8080
+
+4. Open Swagger
+
+```id="l4m9zn"
+http://localhost:8080/swagger-ui/index.html
 ```
 
 ---
 
-## 📦 Sample API Response
+## Reflection
 
-```json
-{
-  "id": 1,
-  "fitnessScore": 0.93,
-  "entries": [
-    {
-      "courseCode": "CS101",
-      "courseName": "Algorithms",
-      "instructorName": "Dr. Ahmed",
-      "roomNumber": "R1",
-      "dayOfWeek": "MONDAY",
-      "startTime": "09:00",
-      "endTime": "11:00"
-    }
-  ]
-}
+This project helped me:
+
+* Design complex scheduling systems
+* Work with constraint-based logic
+* Build scalable backend architecture
+* Handle asynchronous processing
+* Model real-world academic systems
+
+---
+
+## Author
+
+Mahmoud
+Backend Developer (Spring Boot)
 
