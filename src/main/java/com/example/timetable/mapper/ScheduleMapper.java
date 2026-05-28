@@ -5,6 +5,7 @@ import com.example.timetable.dto.response.ScheduleEntryDTO;
 import com.example.timetable.entity.Schedule;
 import com.example.timetable.entity.ScheduleEntry;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class ScheduleMapper {
                         .map(ScheduleMapper::toEntryDTO)
                         .toList();
 
-        return new ScheduleDTO(
+        ScheduleDTO dto = new ScheduleDTO(
                 schedule.getId(),
                 schedule.getFitnessScore(),
                 schedule.getHardViolations(),
@@ -37,6 +38,18 @@ public class ScheduleMapper {
                 schedule.getCreatedAt(),
                 entries
         );
+
+        if (schedule.getSemester() != null) {
+            dto.setSemesterName(schedule.getSemester().getName());
+            dto.setStartDate(schedule.getSemester().getStartDate() != null
+                    ? schedule.getSemester().getStartDate().format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
+                    : null);
+            dto.setEndDate(schedule.getSemester().getEndDate() != null
+                    ? schedule.getSemester().getEndDate().format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
+                    : null);
+        }
+
+        return dto;
     }
 
     private static ScheduleEntryDTO toEntryDTO(

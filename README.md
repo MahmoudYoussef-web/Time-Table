@@ -176,15 +176,15 @@ sequenceDiagram
 
 ### 📄 Schedule Export
 
-- **Premium PDF** — landscape A4, one page per year level
-  - SAT–THU columns (Egyptian university week)
-  - Color-coded cells: blue=LECTURE, green=LAB, beige=BREAK
-  - AM/PM time format
-  - BREAK row after 12:00
-  - Course name + instructor + room per cell
-  - Legend with color explanations
-  - Footer on every page with generation date
-- **Excel Export** via Apache POI
+- **Premium PDF** — landscape A4, one page per year level + summary page
+  - SATURDAY–THURSDAY full-name columns (Egyptian university week)
+  - Color-coded cells: `#DBEAFE` blue=LECTURE, `#DCFCE7` green=LAB/Section, `#FEF3C7` beige=BREAK
+  - AM/PM time format with zebra-striped time column
+  - BREAK row between AM and PM sessions
+  - Course code + name, instructor name (no "Dr." prefix), room, session type in parentheses
+  - Legend with colored boxes per session type + usage notes
+  - Page number footer on every page with generation date
+- **Excel Export** — one sheet per year level, freeze pane, borders, color coding, auto-size columns
 
 ### 📊 Schedule Viewing
 
@@ -272,12 +272,12 @@ All endpoints prefixed with `/api` · Full interactive docs at `/swagger-ui/inde
 #### Soft Constraints (optimization targets)
 
 | Constraint | Description | Weight |
-|---|---|---|
-| `InstructorIdleSoftConstraint` | Minimize idle gaps between lectures | 0.3 |
-| `InstructorBackToBackConstraint` | Reduce consecutive lectures | 0.2 |
-| `SameCourseSameDayConstraint` | Spread same course across days | 0.2 |
-| `StudentIdleSoftConstraint` | Minimize student idle time | 0.2 |
-| `InstructorGapPreferenceConstraint` | Preferred gap between lectures | 0.1 |
+|---|---|---|---|
+| `InstructorIdleSoftConstraint` | Minimize idle gaps between lectures | 1.0 |
+| `InstructorBackToBackConstraint` | Reduce consecutive lectures | 2.0 |
+| `SameCourseSameDayConstraint` | Spread same course across days | 1.0 |
+| `StudentIdleSoftConstraint` | Minimize student idle time | 1.0 |
+| `InstructorGapPreferenceConstraint` | Preferred gap between lectures | 1.5 |
 
 ### Fitness Formula
 
@@ -325,7 +325,9 @@ com.example.timetable
 ├── config/                   # App configuration
 │   ├── DataLoader.java       # Idempotent seed data
 │   ├── SecurityConfig.java   # JWT + role security
-│   └── SwaggerConfig.java    # OpenAPI documentation
+│   ├── OpenApiConfig.java    # OpenAPI documentation
+│   ├── DataInitializer.java  # Seed data initializer
+│   └── AsyncConfig.java      # Async task configuration
 ├── controller/
 │   ├── academic/             # CRUD endpoints
 │   │   ├── CourseController.java
@@ -369,13 +371,17 @@ com.example.timetable
 │   │   ├── Chromosome.java
 │   │   ├── Gene.java
 │   │   └── FitnessCalculator.java
-│   └── constraints/
-│       ├── hard/             # 5 hard constraints
-│       └── soft/             # 5 soft constraints
+│   ├── constraints/
+│   │   ├── hard/             # 5 hard constraints
+│   │   └── soft/             # 5 soft constraints
+│   ├── algorithm/
+│   │   └── config/           # GA config, constraint config
 ├── service/
 │   ├── impl/                 # Service implementations
-│   ├── pdf/                  # SchedulePdfService (premium design)
-│   ├── excel/                # ScheduleExcelService
+│   ├── SchedulePdfService.java    # Premium PDF generation
+│   ├── ScheduleExcelService.java  # Excel export
+│   ├── GeneticScheduleService.java # GA orchestration
+│   ├── ConflictEvaluationService.java
 │   └── (interfaces)
 └── TimetableSchedulerApplication.java
 ```

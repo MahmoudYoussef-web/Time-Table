@@ -12,6 +12,9 @@ public class ScheduleDTO {
     private String status;
     private LocalDateTime createdAt;
     private List<ScheduleEntryDTO> entries;
+    private String semesterName;
+    private String startDate;
+    private String endDate;
 
     public ScheduleDTO(
             Long id,
@@ -58,4 +61,16 @@ public class ScheduleDTO {
     public List<ScheduleEntryDTO> getEntries() {
         return entries;
     }
+
+    public String getSemesterName() { return semesterName; }
+
+    public void setSemesterName(String semesterName) { this.semesterName = semesterName; }
+
+    public String getStartDate() { return startDate; }
+
+    public void setStartDate(String startDate) { this.startDate = startDate; }
+
+    public String getEndDate() { return endDate; }
+
+    public void setEndDate(String endDate) { this.endDate = endDate; }
 }

@@ -103,7 +103,7 @@ public class GeneticScheduleService {
             entry.setInstructor(instructor);
             entry.setRoom(room);
             entry.setTimeSlot(slot);
-            entry.setType(SessionType.LECTURE);
+            entry.setType(determineSessionType(section));
 
             schedule.getEntries().add(entry);
         }
@@ -125,5 +125,12 @@ public class GeneticScheduleService {
         }
 
         return saved;
+    }
+
+    private SessionType determineSessionType(Section section) {
+        String name = section.getName().toUpperCase();
+        if (name.contains("LAB")) return SessionType.LAB;
+        if (name.contains("TUT")) return SessionType.TUTORIAL;
+        return SessionType.LECTURE;
     }
 }
