@@ -13,5 +13,7 @@ public interface RoomService {
 
     RoomResponse save(RoomRequest request);
 
+    RoomResponse update(Long id, RoomRequest request);
+
     void deleteById(Long id);
 }

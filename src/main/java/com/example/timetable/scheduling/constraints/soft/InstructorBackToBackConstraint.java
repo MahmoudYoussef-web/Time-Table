@@ -2,7 +2,6 @@ package com.example.timetable.scheduling.constraints.soft;
 
 import com.example.timetable.scheduling.algorithm.Chromosome;
 import com.example.timetable.scheduling.algorithm.Gene;
-import com.example.timetable.scheduling.constraints.SoftConstraint;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalTime;
@@ -12,8 +11,13 @@ import java.util.List;
 public class InstructorBackToBackConstraint implements SoftConstraint {
 
     @Override
-    public String getName() {
+    public String name() {
         return "Instructor Back-To-Back Lectures";
+    }
+
+    @Override
+    public double weight() {
+        return 2.0;
     }
 
     @Override

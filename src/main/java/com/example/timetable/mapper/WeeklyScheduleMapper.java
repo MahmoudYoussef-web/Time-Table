@@ -76,25 +76,9 @@ public class WeeklyScheduleMapper {
         Map<String, List<ScheduleEntryDTO>> byLevel =
                 schedule.getEntries()
                         .stream()
-                        .collect(Collectors.groupingBy(e -> {
-
-                            String section = e.sectionName();
-
-                            if (section.startsWith("L1"))
-                                return "First Year";
-
-                            if (section.startsWith("L2"))
-                                return "Second Year";
-
-                            if (section.startsWith("L3"))
-                                return "Third Year";
-
-                            if (section.startsWith("L4"))
-                                return "Fourth Year";
-
-                            return "Other";
-                        }));
-
+                        .collect(Collectors.groupingBy(
+                                e -> e.yearLevel() != null ? e.yearLevel() : "Other"
+                        ));
 
         List<String> orderedLevels = List.of(
                 "First Year",

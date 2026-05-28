@@ -6,9 +6,11 @@ import com.example.timetable.entity.Semester;
 import com.example.timetable.mapper.SemesterMapper;
 import com.example.timetable.service.SemesterService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,27 +25,35 @@ public class SemesterController {
 
     @GetMapping
     public ResponseEntity<List<SemesterResponse>> getAll() {
-
         List<SemesterResponse> response =
                 semesterService.findAll()
                         .stream()
                         .map(SemesterMapper::toResponse)
                         .collect(Collectors.toList());
-
         return ResponseEntity.ok(response);
     }
 
     @PostMapping
     public ResponseEntity<SemesterResponse> create(
-            @RequestBody SemesterRequest request
+            @Valid @RequestBody SemesterRequest request
     ) {
-
         Semester semester = SemesterMapper.toEntity(request);
-
         Semester saved = semesterService.save(semester);
+        return ResponseEntity.ok(SemesterMapper.toResponse(saved));
+    }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ResponseEntity<SemesterResponse> update(
+            @PathVariable Long id,
+            @Valid @RequestBody SemesterRequest request
+    ) {
+        Semester existing = semesterService.findById(id);
+        existing.setName(request.name());
+        existing.setStartDate(request.startDate());
+        existing.setEndDate(request.endDate());
         return ResponseEntity.ok(
-                SemesterMapper.toResponse(saved)
+                SemesterMapper.toResponse(semesterService.save(existing))
         );
     }
 }

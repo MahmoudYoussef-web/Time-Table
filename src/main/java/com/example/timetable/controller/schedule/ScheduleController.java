@@ -73,6 +73,7 @@ public class ScheduleController {
     // ===============================
     // Export Schedule PDF
     // ===============================
+    @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER')")
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> exportPdf(@PathVariable Long id) {
 
@@ -84,11 +85,13 @@ public class ScheduleController {
         return ResponseEntity.ok()
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=schedule.pdf"
+                        "attachment; filename=schedule-" + id + ".pdf"
                 )
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
     }
+
+    @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER')")
     @GetMapping("/{id}/excel")
     public ResponseEntity<byte[]> exportExcel(@PathVariable Long id) {
 

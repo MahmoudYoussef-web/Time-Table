@@ -1,5 +1,6 @@
 package com.example.timetable.entity;
 
+import com.example.timetable.entity.enums.SessionType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -44,8 +45,9 @@ public class ScheduleEntry {
         private Schedule schedule;
 
         // Class type
+        @Enumerated(EnumType.STRING)
         @Column(nullable = false, length = 30)
-        private String type;
+        private SessionType type = SessionType.LECTURE;
 
         //  Prevent GA from moving this entry
         @Column(nullable = false)

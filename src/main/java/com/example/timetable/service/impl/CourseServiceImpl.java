@@ -31,10 +31,11 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public Course save(Course course) {
-
-        if (courseRepository.existsByCode(course.getCode())) {
-            throw new IllegalArgumentException("Course code already exists");
-        }
+        courseRepository.findByCode(course.getCode()).ifPresent(existing -> {
+            if (course.getId() == null || !existing.getId().equals(course.getId())) {
+                throw new IllegalArgumentException("Course code already exists");
+            }
+        });
 
         return courseRepository.save(course);
     }

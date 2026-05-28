@@ -42,6 +42,14 @@ public class ScheduleMapper {
     private static ScheduleEntryDTO toEntryDTO(
             ScheduleEntry entry) {
 
+        String yearLevel = entry.getSection().getYearLevel() != null
+                ? entry.getSection().getYearLevel().getDisplayName()
+                : null;
+
+        String sessionType = entry.getType() != null
+                ? entry.getType().name()
+                : null;
+
         return new ScheduleEntryDTO(
 
                 entry.getSection().getId(),
@@ -76,8 +84,12 @@ public class ScheduleMapper {
                         .getEndTime()
                         .toString(),
 
+                yearLevel,
+
+                sessionType,
+
                 0,
                 0
         );
     }
-    }
+}

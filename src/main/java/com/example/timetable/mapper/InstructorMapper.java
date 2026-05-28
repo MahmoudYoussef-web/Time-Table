@@ -6,27 +6,24 @@ import com.example.timetable.entity.Department;
 import com.example.timetable.entity.Instructor;
 import com.example.timetable.entity.User;
 import com.example.timetable.entity.enums.UserRole;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 public class InstructorMapper {
 
-    // Convert request DTO to entity
     public static Instructor toEntity(
             InstructorRequest request,
-            Department department
+            Department department,
+            PasswordEncoder passwordEncoder
     ) {
-
         User user = new User();
-
         user.setFullName(request.name());
         user.setEmail(request.email());
-        user.setPassword("123456");
+        user.setPassword(passwordEncoder.encode(request.password()));
         user.setRole(UserRole.INSTRUCTOR);
         user.setEnabled(true);
 
         Instructor instructor = new Instructor();
         instructor.setUser(user);
-
-        
         instructor.setDepartment(department);
 
         user.setInstructor(instructor);
@@ -34,11 +31,8 @@ public class InstructorMapper {
         return instructor;
     }
 
-    // Convert entity to response DTO
     public static InstructorResponse toResponse(Instructor instructor) {
-
         String departmentName = null;
-
         if (instructor.getDepartment() != null) {
             departmentName = instructor.getDepartment().getName();
         }

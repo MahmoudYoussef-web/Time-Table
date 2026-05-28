@@ -22,7 +22,6 @@ public class RoomController {
     @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER','INSTRUCTOR')")
     @GetMapping
     public ResponseEntity<List<RoomResponse>> getAll() {
-
         return ResponseEntity.ok(
                 roomService.findAll()
         );
@@ -33,7 +32,6 @@ public class RoomController {
     public ResponseEntity<RoomResponse> create(
             @Valid @RequestBody RoomRequest request
     ) {
-
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(
@@ -42,11 +40,20 @@ public class RoomController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ResponseEntity<RoomResponse> update(
+            @PathVariable Long id,
+            @Valid @RequestBody RoomRequest request
+    ) {
+        return ResponseEntity.ok(
+                roomService.update(id, request)
+        );
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-
         roomService.deleteById(id);
-
         return ResponseEntity.noContent().build();
     }
 }

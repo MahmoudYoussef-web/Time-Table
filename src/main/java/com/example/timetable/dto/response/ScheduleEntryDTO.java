@@ -22,6 +22,10 @@ public record ScheduleEntryDTO(
 
         String endTime,
 
+        String yearLevel,
+
+        String sessionType,
+
         int hardViolations,
 
         int softViolations

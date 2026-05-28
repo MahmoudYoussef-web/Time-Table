@@ -54,6 +54,21 @@ public class RoomServiceImpl implements RoomService {
         return RoomMapper.toResponse(saved);
     }
 
+    @Override
+    public RoomResponse update(Long id, RoomRequest request) {
+        Room room = roomRepository.findById(id)
+                .orElseThrow(() ->
+                        new NoSuchElementException(
+                                "Room not found with id: " + id
+                        ));
+
+        room.setBuilding(request.building());
+        room.setRoomNumber(request.roomNumber());
+        room.setCapacity(request.capacity());
+
+        return RoomMapper.toResponse(roomRepository.save(room));
+    }
+
     // Delete room
     @Override
     public void deleteById(Long id) {

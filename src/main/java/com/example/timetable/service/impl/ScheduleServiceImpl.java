@@ -70,7 +70,6 @@ public class ScheduleServiceImpl implements ScheduleService {
         } catch (Exception e) {
 
             log.error("Schedule generation failed", e);
-            e.printStackTrace();
             job.setStatus(JobStatus.FAILED);
         }
 
@@ -87,7 +86,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public ScheduleDTO getScheduleById(Long id) {
-        return ScheduleMapper.toDTO(getScheduleEntity(id));
+        return ScheduleMapper.toDTO(getScheduleWithDetails(id));
     }
 
     @Override
@@ -103,7 +102,8 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         schedule.setStatus(ScheduleStatus.VALIDATED);
 
-        return ScheduleMapper.toDTO(schedule);
+        return ScheduleMapper.toDTO(scheduleRepository.findByIdWithDetails(id)
+                .orElseThrow(() -> new NoSuchElementException("Schedule not found")));
     }
 
     @Override
@@ -125,7 +125,8 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         schedule.setStatus(ScheduleStatus.PUBLISHED);
 
-        return ScheduleMapper.toDTO(schedule);
+        return ScheduleMapper.toDTO(scheduleRepository.findByIdWithDetails(id)
+                .orElseThrow(() -> new NoSuchElementException("Schedule not found")));
     }
 
     @Override
@@ -138,7 +139,8 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         schedule.setStatus(ScheduleStatus.LOCKED);
 
-        return ScheduleMapper.toDTO(schedule);
+        return ScheduleMapper.toDTO(scheduleRepository.findByIdWithDetails(id)
+                .orElseThrow(() -> new NoSuchElementException("Schedule not found")));
     }
 
     @Override
@@ -146,11 +148,11 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         Schedule latest = scheduleRepository
                 .findTopByStatusOrderByCreatedAtDesc(ScheduleStatus.PUBLISHED)
-                .orElseThrow();
+                .orElseThrow(() -> new NoSuchElementException("No published schedule found"));
 
         List<ScheduleEntry> entries =
                 scheduleEntryRepository
-                        .findByScheduleIdAndSectionInstructorId(
+                        .findByScheduleIdAndInstructorIdWithDetails(
                                 latest.getId(),
                                 instructorId
                         );
@@ -165,7 +167,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         ScheduleEntry entry =
                 scheduleEntryRepository.findById(entryId)
-                        .orElseThrow();
+                        .orElseThrow(() -> new NoSuchElementException("Entry not found"));
 
         if (!entry.getSchedule().getId().equals(scheduleId))
             throw new IllegalArgumentException("Invalid entry");
@@ -176,6 +178,12 @@ public class ScheduleServiceImpl implements ScheduleService {
     private Schedule getScheduleEntity(Long id) {
 
         return scheduleRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Schedule not found"));
+    }
+
+    private Schedule getScheduleWithDetails(Long id) {
+
+        return scheduleRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new NoSuchElementException("Schedule not found"));
     }
 

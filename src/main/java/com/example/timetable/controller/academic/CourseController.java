@@ -2,12 +2,17 @@ package com.example.timetable.controller.academic;
 
 import com.example.timetable.dto.request.CourseRequest;
 import com.example.timetable.dto.response.CourseResponse;
+import com.example.timetable.entity.Course;
 import com.example.timetable.entity.Department;
 import com.example.timetable.mapper.CourseMapper;
 import com.example.timetable.service.CourseService;
 import com.example.timetable.service.DepartmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -49,7 +54,6 @@ public class CourseController {
     public ResponseEntity<CourseResponse> create(
             @Valid @RequestBody CourseRequest request
     ) {
-
         Department department =
                 departmentService.findById(
                         request.departmentId()
@@ -68,6 +72,24 @@ public class CourseController {
                 );
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ResponseEntity<CourseResponse> update(
+            @PathVariable Long id,
+            @Valid @RequestBody CourseRequest request
+    ) {
+        Course existing = courseService.findById(id);
+        Department department = departmentService.findById(request.departmentId());
+
+        existing.setCode(request.code());
+        existing.setName(request.name());
+        existing.setCreditHours(request.creditHours());
+        existing.setDepartment(department);
+
+        return ResponseEntity.ok(
+                CourseMapper.toResponse(courseService.save(existing))
+        );
+    }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")

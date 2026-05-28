@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,9 +25,8 @@ import java.util.List;
 public class InstructorController {
 
     private final InstructorService instructorService;
-
-    // ⭐ أضف هذا السطر
     private final DepartmentService departmentService;
+    private final PasswordEncoder passwordEncoder;
 
     @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER','INSTRUCTOR')")
     @GetMapping
@@ -44,12 +44,11 @@ public class InstructorController {
     public ResponseEntity<InstructorResponse> create(
             @Valid @RequestBody InstructorRequest request
     ) {
-
         Department department =
                 departmentService.findById(request.departmentId());
 
         Instructor instructor =
-                InstructorMapper.toEntity(request, department);
+                InstructorMapper.toEntity(request, department, passwordEncoder);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(
@@ -57,6 +56,28 @@ public class InstructorController {
                                 instructorService.save(instructor)
                         )
                 );
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ResponseEntity<InstructorResponse> update(
+            @PathVariable Long id,
+            @Valid @RequestBody InstructorRequest request
+    ) {
+        Instructor existing = instructorService.findById(id);
+        Department department = departmentService.findById(request.departmentId());
+
+        existing.getUser().setFullName(request.name());
+        existing.getUser().setEmail(request.email());
+        existing.setDepartment(department);
+
+        if (request.password() != null && !request.password().isBlank()) {
+            existing.getUser().setPassword(passwordEncoder.encode(request.password()));
+        }
+
+        return ResponseEntity.ok(
+                InstructorMapper.toResponse(instructorService.save(existing))
+        );
     }
 
     @PreAuthorize("hasRole('ADMIN')")

@@ -1,23 +1,27 @@
 package com.example.timetable.service;
 
 import com.example.timetable.entity.*;
+import com.example.timetable.entity.enums.SessionType;
 import com.example.timetable.repository.*;
 import com.example.timetable.scheduling.algorithm.Chromosome;
 import com.example.timetable.scheduling.algorithm.Gene;
 import com.example.timetable.scheduling.algorithm.GeneticAlgorithm;
+import com.example.timetable.scheduling.constraints.hard.InstructorAvailabilityConstraint;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Propagation;
 
 import java.util.*;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class GeneticScheduleService {
+
+    private static final Logger log = LoggerFactory.getLogger(GeneticScheduleService.class);
 
     private final GeneticAlgorithm geneticAlgorithm;
     private final SectionRepository sectionRepository;
@@ -25,6 +29,8 @@ public class GeneticScheduleService {
     private final TimeSlotRepository timeSlotRepository;
     private final ScheduleRepository scheduleRepository;
     private final SemesterRepository semesterRepository;
+    private final InstructorAvailabilityConstraint availabilityConstraint;
+    private final InstructorRepository instructorRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Schedule generate(Long semesterId) {
@@ -32,7 +38,7 @@ public class GeneticScheduleService {
         Semester semester = semesterRepository.findById(semesterId)
                 .orElseThrow(() -> new NoSuchElementException("Semester not found"));
 
-        List<Section> sections = sectionRepository.findBySemester_Id(semesterId);
+        List<Section> sections = sectionRepository.findBySemesterId(semesterId);
 
         if (sections.isEmpty()) {
             throw new IllegalStateException("No sections found for this semester");
@@ -40,6 +46,14 @@ public class GeneticScheduleService {
 
         List<Room> rooms = roomRepository.findAll();
         List<TimeSlot> slots = timeSlotRepository.findAll();
+
+        // Preload instructor availability constraint
+        Set<InstructorAvailability> allUnavailable = sections.stream()
+                .map(Section::getInstructor)
+                .distinct()
+                .flatMap(i -> i.getUnavailableSlots().stream())
+                .collect(Collectors.toSet());
+        availabilityConstraint.preload(allUnavailable);
 
         Chromosome best = geneticAlgorithm.evolve(sections, rooms, slots);
 
@@ -89,11 +103,27 @@ public class GeneticScheduleService {
             entry.setInstructor(instructor);
             entry.setRoom(room);
             entry.setTimeSlot(slot);
-            entry.setType("LECTURE");
+            entry.setType(SessionType.LECTURE);
 
             schedule.getEntries().add(entry);
         }
 
-        return scheduleRepository.save(schedule);
+        Schedule saved = scheduleRepository.save(schedule);
+
+        // Warn about any sections that lost their slot due to duplicate filtering
+        Set<Long> scheduledSectionIds = saved.getEntries().stream()
+                .map(e -> e.getSection().getId())
+                .collect(Collectors.toSet());
+
+        List<Long> missingSections = sections.stream()
+                .map(Section::getId)
+                .filter(id -> !scheduledSectionIds.contains(id))
+                .collect(Collectors.toList());
+
+        if (!missingSections.isEmpty()) {
+            log.warn("Sections not scheduled (duplicate gene conflict): {}", missingSections);
+        }
+
+        return saved;
     }
 }

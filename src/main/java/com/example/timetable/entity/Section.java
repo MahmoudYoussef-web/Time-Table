@@ -1,5 +1,6 @@
 package com.example.timetable.entity;
 
+import com.example.timetable.entity.enums.YearLevel;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -30,6 +31,10 @@ public class Section {
 
     @Column(nullable = false)
     private int capacity;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "year_level", length = 20)
+    private YearLevel yearLevel;
 
     @OneToMany(mappedBy = "section", fetch = FetchType.LAZY)
     @JsonIgnore

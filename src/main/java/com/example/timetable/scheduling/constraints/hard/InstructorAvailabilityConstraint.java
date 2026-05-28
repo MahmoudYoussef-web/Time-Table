@@ -6,13 +6,13 @@ import com.example.timetable.scheduling.algorithm.Gene;
 import com.example.timetable.scheduling.constraints.HardConstraint;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class InstructorAvailabilityConstraint implements HardConstraint {
 
-    private final Set<String> unavailableCache = new HashSet<>();
+    private final Set<String> unavailableCache = ConcurrentHashMap.newKeySet();
 
     public void preload(Set<InstructorAvailability> unavailable) {
         unavailableCache.clear();

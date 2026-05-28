@@ -2,7 +2,6 @@ package com.example.timetable.scheduling.constraints.soft;
 
 import com.example.timetable.scheduling.algorithm.Chromosome;
 import com.example.timetable.scheduling.algorithm.Gene;
-import com.example.timetable.scheduling.constraints.SoftConstraint;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -15,8 +14,13 @@ public class InstructorGapPreferenceConstraint implements SoftConstraint {
     private final long minGapMinutes = 30;
 
     @Override
-    public String getName() {
+    public String name() {
         return "Instructor Idle Gap Preference";
+    }
+
+    @Override
+    public double weight() {
+        return 1.5;
     }
 
     @Override

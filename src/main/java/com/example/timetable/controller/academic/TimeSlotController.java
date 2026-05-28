@@ -6,6 +6,7 @@ import com.example.timetable.entity.TimeSlot;
 import com.example.timetable.mapper.TimeSlotMapper;
 import com.example.timetable.service.TimeSlotService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -25,37 +26,43 @@ public class TimeSlotController {
     @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER')")
     @GetMapping
     public ResponseEntity<List<TimeSlotResponse>> getAll() {
-
         List<TimeSlotResponse> response =
                 timeSlotService.findAll()
                         .stream()
                         .map(TimeSlotMapper::toResponse)
                         .collect(Collectors.toList());
-
         return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<TimeSlotResponse> create(
-            @RequestBody TimeSlotRequest request
+            @Valid @RequestBody TimeSlotRequest request
     ) {
-
         TimeSlot timeSlot = TimeSlotMapper.toEntity(request);
-
         TimeSlot saved = timeSlotService.save(timeSlot);
+        return ResponseEntity.ok(TimeSlotMapper.toResponse(saved));
+    }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ResponseEntity<TimeSlotResponse> update(
+            @PathVariable Long id,
+            @Valid @RequestBody TimeSlotRequest request
+    ) {
+        TimeSlot existing = timeSlotService.findById(id);
+        existing.setDay(java.time.DayOfWeek.valueOf(request.day().toUpperCase()));
+        existing.setStartTime(java.time.LocalTime.parse(request.startTime()));
+        existing.setEndTime(java.time.LocalTime.parse(request.endTime()));
         return ResponseEntity.ok(
-                TimeSlotMapper.toResponse(saved)
+                TimeSlotMapper.toResponse(timeSlotService.save(existing))
         );
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-
         timeSlotService.deleteById(id);
-
         return ResponseEntity.noContent().build();
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Optional;
 
 @Configuration
 @RequiredArgsConstructor
@@ -28,117 +29,161 @@ public class DataLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-
-        if (courseRepository.count() > 0) {
+        if (courseRepository.count() > 0 && sectionRepository.count() > 0) {
             return;
         }
 
-        /* ===== Department ===== */
+        /* ===== Department (find-or-create) ===== */
 
-        Department cs = new Department();
-        cs.setCode("CS");
-        cs.setName("Computer Science");
-        departmentRepository.save(cs);
+        Department cs = departmentRepository.findByCode("CS")
+                .orElseGet(() -> {
+                    Department d = new Department();
+                    d.setCode("CS");
+                    d.setName("Computer Science");
+                    return departmentRepository.save(d);
+                });
 
         /* ===== Users (Instructors) ===== */
 
-        User u1 = new User();
-        u1.setFullName("Dr. Ahmed");
-        u1.setEmail("ahmed@uni.edu");
-        u1.setPassword(passwordEncoder.encode("123456"));
-        u1.setRole(UserRole.INSTRUCTOR);
-        u1.setEnabled(true);
-        userRepository.save(u1);
+        User u1 = userRepository.findByEmail("ahmed@uni.edu")
+                .orElseGet(() -> {
+                    User u = new User();
+                    u.setFullName("Dr. Ahmed");
+                    u.setEmail("ahmed@uni.edu");
+                    u.setPassword(passwordEncoder.encode("123456"));
+                    u.setRole(UserRole.INSTRUCTOR);
+                    u.setEnabled(true);
+                    return userRepository.save(u);
+                });
 
-        User u2 = new User();
-        u2.setFullName("Dr. Sara");
-        u2.setEmail("sara@uni.edu");
-        u2.setPassword(passwordEncoder.encode("123456"));
-        u2.setRole(UserRole.INSTRUCTOR);
-        u2.setEnabled(true);
-        userRepository.save(u2);
+        User u2 = userRepository.findByEmail("sara@uni.edu")
+                .orElseGet(() -> {
+                    User u = new User();
+                    u.setFullName("Dr. Sara");
+                    u.setEmail("sara@uni.edu");
+                    u.setPassword(passwordEncoder.encode("123456"));
+                    u.setRole(UserRole.INSTRUCTOR);
+                    u.setEnabled(true);
+                    return userRepository.save(u);
+                });
 
-        /* ===== Instructors ===== */
+        /* ===== Instructors (find-or-create by user) ===== */
 
-        Instructor i1 = new Instructor();
-        i1.setUser(u1);
-        i1.setDepartment(cs);
-        instructorRepository.save(i1);
+        Instructor i1 = instructorRepository.findByUserId(u1.getId())
+                .orElseGet(() -> {
+                    Instructor i = new Instructor();
+                    i.setUser(u1);
+                    i.setDepartment(cs);
+                    return instructorRepository.save(i);
+                });
 
-        Instructor i2 = new Instructor();
-        i2.setUser(u2);
-        i2.setDepartment(cs);
-        instructorRepository.save(i2);
+        Instructor i2 = instructorRepository.findByUserId(u2.getId())
+                .orElseGet(() -> {
+                    Instructor i = new Instructor();
+                    i.setUser(u2);
+                    i.setDepartment(cs);
+                    return instructorRepository.save(i);
+                });
 
         /* ===== Courses ===== */
 
-        Course c1 = new Course();
-        c1.setCode("CS101");
-        c1.setName("Programming");
-        c1.setCreditHours(3);
-        c1.setDepartment(cs);
-        courseRepository.save(c1);
+        Course c1 = courseRepository.findByCode("CS101")
+                .orElseGet(() -> {
+                    Course c = new Course();
+                    c.setCode("CS101");
+                    c.setName("Programming");
+                    c.setCreditHours(3);
+                    c.setDepartment(cs);
+                    return courseRepository.save(c);
+                });
 
-        Course c2 = new Course();
-        c2.setCode("CS102");
-        c2.setName("Data Structures");
-        c2.setCreditHours(3);
-        c2.setDepartment(cs);
-        courseRepository.save(c2);
+        Course c2 = courseRepository.findByCode("CS102")
+                .orElseGet(() -> {
+                    Course c = new Course();
+                    c.setCode("CS102");
+                    c.setName("Data Structures");
+                    c.setCreditHours(3);
+                    c.setDepartment(cs);
+                    return courseRepository.save(c);
+                });
 
         /* ===== Rooms ===== */
 
-        Room r1 = new Room();
-        r1.setBuilding("Main");
-        r1.setRoomNumber("A101");
-        r1.setCapacity(40);
-        roomRepository.save(r1);
+        Room r1 = roomRepository.findByBuildingAndRoomNumber("Main", "A101")
+                .orElseGet(() -> {
+                    Room r = new Room();
+                    r.setBuilding("Main");
+                    r.setRoomNumber("A101");
+                    r.setCapacity(40);
+                    return roomRepository.save(r);
+                });
 
-        Room r2 = new Room();
-        r2.setBuilding("Main");
-        r2.setRoomNumber("B202");
-        r2.setCapacity(60);
-        roomRepository.save(r2);
+        Room r2 = roomRepository.findByBuildingAndRoomNumber("Main", "B202")
+                .orElseGet(() -> {
+                    Room r = new Room();
+                    r.setBuilding("Main");
+                    r.setRoomNumber("B202");
+                    r.setCapacity(60);
+                    return roomRepository.save(r);
+                });
 
         /* ===== Time Slots ===== */
 
-        TimeSlot t1 = new TimeSlot();
-        t1.setDay(DayOfWeek.MONDAY);
-        t1.setStartTime(LocalTime.of(9, 0));
-        t1.setEndTime(LocalTime.of(11, 0));
-        timeSlotRepository.save(t1);
+        TimeSlot t1 = timeSlotRepository
+                .findByDayAndStartTimeAndEndTime(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(11, 0))
+                .orElseGet(() -> {
+                    TimeSlot t = new TimeSlot();
+                    t.setDay(DayOfWeek.MONDAY);
+                    t.setStartTime(LocalTime.of(9, 0));
+                    t.setEndTime(LocalTime.of(11, 0));
+                    return timeSlotRepository.save(t);
+                });
 
-        TimeSlot t2 = new TimeSlot();
-        t2.setDay(DayOfWeek.MONDAY);
-        t2.setStartTime(LocalTime.of(11, 0));
-        t2.setEndTime(LocalTime.of(13, 0));
-        timeSlotRepository.save(t2);
+        TimeSlot t2 = timeSlotRepository
+                .findByDayAndStartTimeAndEndTime(DayOfWeek.MONDAY, LocalTime.of(11, 0), LocalTime.of(13, 0))
+                .orElseGet(() -> {
+                    TimeSlot t = new TimeSlot();
+                    t.setDay(DayOfWeek.MONDAY);
+                    t.setStartTime(LocalTime.of(11, 0));
+                    t.setEndTime(LocalTime.of(13, 0));
+                    return timeSlotRepository.save(t);
+                });
+
         /* ===== Semester ===== */
 
-        Semester semester = new Semester();
-        semester.setName("Spring 2026");
-        semester.setStartDate(LocalDate.of(2026, 2, 1));
-        semester.setEndDate(LocalDate.of(2026, 6, 1));
-        semesterRepository.save(semester);
+        Semester semester = semesterRepository.findByName("Spring 2026")
+                .orElseGet(() -> {
+                    Semester s = new Semester();
+                    s.setName("Spring 2026");
+                    s.setStartDate(LocalDate.of(2026, 2, 1));
+                    s.setEndDate(LocalDate.of(2026, 6, 1));
+                    return semesterRepository.save(s);
+                });
 
         /* ===== Sections ===== */
 
-        Section s1 = new Section();
-        s1.setName("A");
-        s1.setCourse(c1);
-        s1.setInstructor(i1);
-        s1.setCapacity(35);
-        s1.setSemester(semester);
-        sectionRepository.save(s1);
+        sectionRepository.findByNameAndCourseIdAndSemesterId("A", c1.getId(), semester.getId())
+                .orElseGet(() -> {
+                    Section s = new Section();
+                    s.setName("A");
+                    s.setCourse(c1);
+                    s.setInstructor(i1);
+                    s.setCapacity(35);
+                    s.setSemester(semester);
+                    return sectionRepository.save(s);
+                });
 
-        Section s2 = new Section();
-        s2.setName("B");
-        s2.setCourse(c2);
-        s2.setInstructor(i2);
-        s2.setCapacity(40);
-        s2.setSemester(semester);
-        sectionRepository.save(s2);
+        sectionRepository.findByNameAndCourseIdAndSemesterId("B", c2.getId(), semester.getId())
+                .orElseGet(() -> {
+                    Section s = new Section();
+                    s.setName("B");
+                    s.setCourse(c2);
+                    s.setInstructor(i2);
+                    s.setCapacity(40);
+                    s.setSemester(semester);
+                    return sectionRepository.save(s);
+                });
 
-        System.out.println("✅ Seed data loaded successfully");
+        System.out.println("Seed data loaded successfully");
     }
 }

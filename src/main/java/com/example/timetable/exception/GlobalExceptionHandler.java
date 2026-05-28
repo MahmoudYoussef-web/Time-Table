@@ -2,6 +2,7 @@ package com.example.timetable.exception;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -131,6 +133,55 @@ public class GlobalExceptionHandler {
         return buildError(
                 HttpStatus.FORBIDDEN,
                 "You do not have permission to perform this action",
+                request.getRequestURI()
+        );
+    }
+
+    // ===============================
+    // No Such Element
+    // ===============================
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<ApiError> handleNoSuchElement(
+            NoSuchElementException ex,
+            HttpServletRequest request
+    ) {
+        return buildError(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
+    // ===============================
+    // Data Integrity (unique constraint, etc.)
+    // ===============================
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handleDataIntegrity(
+            DataIntegrityViolationException ex,
+            HttpServletRequest request
+    ) {
+        String message = ex.getRootCause() != null
+                ? ex.getRootCause().getMessage()
+                : ex.getMessage();
+
+        return buildError(
+                HttpStatus.CONFLICT,
+                message,
+                request.getRequestURI()
+        );
+    }
+
+    // ===============================
+    // Illegal State
+    // ===============================
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiError> handleIllegalState(
+            IllegalStateException ex,
+            HttpServletRequest request
+    ) {
+        return buildError(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
                 request.getRequestURI()
         );
     }

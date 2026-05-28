@@ -4,11 +4,13 @@ import com.example.timetable.entity.Instructor;
 import com.example.timetable.entity.TimeSlot;
 import com.example.timetable.scheduling.algorithm.Chromosome;
 import com.example.timetable.scheduling.algorithm.Gene;
+import org.springframework.stereotype.Component;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.util.*;
 
+@Component
 public class InstructorIdleSoftConstraint implements SoftConstraint {
 
     private static final int DAILY_IDLE_THRESHOLD = 120; // ساعتين

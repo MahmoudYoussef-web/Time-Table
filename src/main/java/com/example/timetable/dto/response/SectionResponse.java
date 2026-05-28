@@ -1,19 +1,14 @@
 package com.example.timetable.dto.response;
 
+import com.example.timetable.entity.enums.YearLevel;
+
 public record SectionResponse(
 
         Long id,
-
-        // Section name
         String name,
-
-        // Course info
         String courseCode,
         String courseName,
-
-        // Instructor name
         String instructorName,
-
-        // Maximum capacity
-        int capacity
+        int capacity,
+        YearLevel yearLevel
 ) {}

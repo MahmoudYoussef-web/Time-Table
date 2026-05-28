@@ -15,25 +15,20 @@ public class SectionMapper {
             Instructor instructor,
             Semester semester
     ) {
-
         Section section = new Section();
-
         section.setName(request.name());
         section.setCourse(course);
         section.setInstructor(instructor);
         section.setSemester(semester);
         section.setCapacity(request.capacity());
-
+        section.setYearLevel(request.yearLevel());
         return section;
     }
 
     public static SectionResponse toResponse(Section section) {
-
         String instructorName = null;
-
         if (section.getInstructor() != null
                 && section.getInstructor().getUser() != null) {
-
             instructorName =
                     section.getInstructor()
                             .getUser()
@@ -46,7 +41,8 @@ public class SectionMapper {
                 section.getCourse().getCode(),
                 section.getCourse().getName(),
                 instructorName,
-                section.getCapacity()
+                section.getCapacity(),
+                section.getYearLevel()
         );
     }
 }
