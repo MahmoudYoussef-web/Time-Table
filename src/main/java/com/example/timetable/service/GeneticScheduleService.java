@@ -41,6 +41,12 @@ public class GeneticScheduleService {
         Semester semester = semesterRepository.findById(semesterId)
                 .orElseThrow(() -> new NoSuchElementException("Semester not found"));
 
+        // Delete previous DRAFT schedules for this semester to avoid global UK conflicts
+        scheduleRepository.deleteAll(
+                scheduleRepository.findBySemesterIdAndStatus(
+                        semesterId, com.example.timetable.entity.enums.ScheduleStatus.DRAFT)
+        );
+
         List<Section> sections = sectionRepository.findBySemesterId(semesterId);
 
         if (sections.isEmpty()) {
