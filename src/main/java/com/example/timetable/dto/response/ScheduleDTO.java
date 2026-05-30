@@ -12,9 +12,14 @@ public class ScheduleDTO {
     private String status;
     private LocalDateTime createdAt;
     private List<ScheduleEntryDTO> entries;
+    private List<Long> unscheduledSectionIds;
     private String semesterName;
     private String startDate;
     private String endDate;
+
+    public List<Long> getUnscheduledSectionIds() { return unscheduledSectionIds; }
+
+    public void setUnscheduledSectionIds(List<Long> unscheduledSectionIds) { this.unscheduledSectionIds = unscheduledSectionIds; }
 
     public ScheduleDTO(
             Long id,

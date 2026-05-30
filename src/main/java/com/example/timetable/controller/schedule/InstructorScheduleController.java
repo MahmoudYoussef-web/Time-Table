@@ -21,7 +21,7 @@ public class InstructorScheduleController {
     private final InstructorService instructorService;
 
     // Get schedule for logged-in instructor
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     @GetMapping("/my")
     public ResponseEntity<WeeklyScheduleDTO> getMySchedule(
             Authentication authentication

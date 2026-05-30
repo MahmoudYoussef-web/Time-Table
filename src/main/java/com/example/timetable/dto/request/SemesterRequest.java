@@ -1,5 +1,6 @@
 package com.example.timetable.dto.request;
 
+import com.example.timetable.entity.enums.SemesterStatus;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
@@ -18,5 +19,7 @@ public record SemesterRequest(
 
         @NotNull(message = "End date is required")
         @Future(message = "End date must be in the future")
-        LocalDate endDate
+        LocalDate endDate,
+
+        SemesterStatus status
 ) {}

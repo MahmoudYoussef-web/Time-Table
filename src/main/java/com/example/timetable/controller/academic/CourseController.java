@@ -7,6 +7,7 @@ import com.example.timetable.entity.Department;
 import com.example.timetable.mapper.CourseMapper;
 import com.example.timetable.service.CourseService;
 import com.example.timetable.service.DepartmentService;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -51,6 +52,7 @@ public class CourseController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
+    @ApiResponse(responseCode = "201", description = "Course created")
     public ResponseEntity<CourseResponse> create(
             @Valid @RequestBody CourseRequest request
     ) {

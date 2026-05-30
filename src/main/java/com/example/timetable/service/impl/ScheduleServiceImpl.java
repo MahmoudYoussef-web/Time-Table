@@ -14,6 +14,7 @@ import com.example.timetable.repository.ScheduleGenerationJobRepository;
 import com.example.timetable.repository.ScheduleRepository;
 import com.example.timetable.repository.SemesterRepository;
 import com.example.timetable.scheduling.constraints.ConstraintViolation;
+import com.example.timetable.service.AsyncScheduleJobService;
 import com.example.timetable.service.ConflictEvaluationService;
 import com.example.timetable.service.GeneticScheduleService;
 import com.example.timetable.service.ScheduleService;
@@ -38,6 +39,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final ScheduleEntryRepository scheduleEntryRepository;
     private final SemesterRepository semesterRepository;
     private final GeneticScheduleService geneticScheduleService;
+    private final AsyncScheduleJobService asyncScheduleJobService;
     private final ScheduleGenerationJobRepository jobRepository;
     private final ConflictEvaluationService conflictEvaluationService;
 
@@ -59,21 +61,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         jobRepository.save(job);
 
-        try {
-
-            Schedule schedule =
-                    geneticScheduleService.generate(semesterId);
-
-            job.setScheduleId(schedule.getId());
-            job.setStatus(JobStatus.COMPLETED);
-
-        } catch (Exception e) {
-
-            log.error("Schedule generation failed", e);
-            job.setStatus(JobStatus.FAILED);
-        }
-
-        jobRepository.save(job);
+        asyncScheduleJobService.generate(job.getId(), semesterId);
 
         return job.getId();
     }
@@ -193,6 +181,20 @@ public class ScheduleServiceImpl implements ScheduleService {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new NoSuchElementException("Schedule not found"));
 
-        return conflictEvaluationService.explain(schedule);
+        List<ConstraintViolation> violations = conflictEvaluationService.explain(schedule);
+
+        if (schedule.getUnscheduledSectionIds() != null
+                && !schedule.getUnscheduledSectionIds().isEmpty()) {
+
+            for (Long sectionId : schedule.getUnscheduledSectionIds()) {
+                violations.add(new ConstraintViolation(
+                        "UnscheduledSection",
+                        sectionId,
+                        "Section could not be scheduled due to no available room/time slot"
+                ));
+            }
+        }
+
+        return violations;
     }
 }

@@ -39,6 +39,10 @@ public class ScheduleMapper {
                 entries
         );
 
+        if (schedule.getUnscheduledSectionIds() != null) {
+            dto.setUnscheduledSectionIds(schedule.getUnscheduledSectionIds());
+        }
+
         if (schedule.getSemester() != null) {
             dto.setSemesterName(schedule.getSemester().getName());
             dto.setStartDate(schedule.getSemester().getStartDate() != null

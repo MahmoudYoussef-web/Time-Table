@@ -11,6 +11,7 @@ import com.example.timetable.service.CourseService;
 import com.example.timetable.service.InstructorService;
 import com.example.timetable.service.SectionService;
 import com.example.timetable.service.SemesterService;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -78,6 +79,7 @@ public class SectionController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
+    @ApiResponse(responseCode = "204", description = "Deleted successfully")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         sectionService.deleteById(id);
         return ResponseEntity.noContent().build();

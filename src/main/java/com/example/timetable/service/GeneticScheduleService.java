@@ -130,7 +130,7 @@ public class GeneticScheduleService {
 
         Schedule saved = scheduleRepository.save(schedule);
 
-        // Warn about any sections that lost their slot due to duplicate filtering
+        // Save unscheduled section IDs
         Set<Long> scheduledSectionIds = saved.getEntries().stream()
                 .map(e -> e.getSection().getId())
                 .collect(Collectors.toSet());
@@ -143,6 +143,9 @@ public class GeneticScheduleService {
         if (!missingSections.isEmpty()) {
             log.warn("Sections not scheduled (duplicate gene conflict): {}", missingSections);
         }
+
+        saved.setUnscheduledSectionIds(missingSections);
+        scheduleRepository.save(saved);
 
         return saved;
     }

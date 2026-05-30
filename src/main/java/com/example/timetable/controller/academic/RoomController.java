@@ -3,6 +3,7 @@ package com.example.timetable.controller.academic;
 import com.example.timetable.dto.request.RoomRequest;
 import com.example.timetable.dto.response.RoomResponse;
 import com.example.timetable.service.RoomService;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -52,6 +53,7 @@ public class RoomController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
+    @ApiResponse(responseCode = "204", description = "Deleted successfully")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         roomService.deleteById(id);
         return ResponseEntity.noContent().build();

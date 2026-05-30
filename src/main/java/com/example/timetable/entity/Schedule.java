@@ -54,6 +54,12 @@ public class Schedule {
             fetch = FetchType.LAZY)
     private List<ScheduleEntry> entries = new ArrayList<>();
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "schedule_unscheduled_sections",
+            joinColumns = @JoinColumn(name = "schedule_id"))
+    @Column(name = "section_id")
+    private List<Long> unscheduledSectionIds = new ArrayList<>();
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

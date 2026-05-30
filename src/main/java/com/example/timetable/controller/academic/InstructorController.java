@@ -8,6 +8,7 @@ import com.example.timetable.mapper.InstructorMapper;
 import com.example.timetable.service.DepartmentService;
 import com.example.timetable.service.InstructorService;
 
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -41,6 +42,7 @@ public class InstructorController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
+    @ApiResponse(responseCode = "201", description = "Instructor created")
     public ResponseEntity<InstructorResponse> create(
             @Valid @RequestBody InstructorRequest request
     ) {

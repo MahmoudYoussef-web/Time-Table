@@ -48,12 +48,8 @@ public class SemesterController {
             @PathVariable Long id,
             @Valid @RequestBody SemesterRequest request
     ) {
-        Semester existing = semesterService.findById(id);
-        existing.setName(request.name());
-        existing.setStartDate(request.startDate());
-        existing.setEndDate(request.endDate());
         return ResponseEntity.ok(
-                SemesterMapper.toResponse(semesterService.save(existing))
+                SemesterMapper.toResponse(semesterService.update(id, request))
         );
     }
 }
