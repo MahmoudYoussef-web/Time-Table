@@ -56,6 +56,7 @@ Export to **professional PDF** or **Excel** with color-coded year-level tables.
 | Exporting is a hassle | **Premium PDF** (landscape A4, color-coded, AM/PM, Legend) + **Excel** export |
 | Multiple year levels | **YearLevel enum** groups sections into FIRST–FOURTH with per-level tables |
 | Session variety | **SessionType enum** (LECTURE, LAB, TUTORIAL, SEMINAR) with color-coded cells |
+| Room type matching | **RoomType enum** (LECTURE_HALL, LAB, TUTORIAL_ROOM, SEMINAR_ROOM) with dedicated constraint |
 | Role-based access | **JWT auth** with ADMIN, SCHEDULER, INSTRUCTOR roles |
 | AI readability | **Clean architecture** with layered packages, DTOs, and full Swagger docs |
 
@@ -88,7 +89,7 @@ graph TD
         GA --> Selection[TournamentSelection]
         GA --> Crossover[SinglePointCrossover]
         GA --> Mutation[RandomMutation]
-        Fitness --> HardConstraints[Hard Constraints<br/>Room · Instructor · Capacity · Time · Student]
+        Fitness --> HardConstraints[Hard Constraints<br/>Room · Instructor · Capacity · Time · Type · Student]
         Fitness --> SoftConstraints[Soft Constraints<br/>Idle Gaps · Back-to-Back · Day Distribution]
     end
 
@@ -157,9 +158,9 @@ sequenceDiagram
 | Entity | Endpoints | Description |
 |---|---|---|
 | **Courses** | GET, POST, PUT, DELETE | Code, name, credit hours, department |
-| **Rooms** | GET, POST, PUT, DELETE | Building, room number, capacity |
+| **Rooms** | GET, POST, PUT, DELETE | Building, room number, capacity, **room type** |
 | **Instructors** | GET, POST, PUT, DELETE | Name, email, department, auto-creates User |
-| **Sections** | GET, POST, PUT, DELETE | Name, course, instructor, semester, year level |
+| **Sections** | GET, POST, PUT, DELETE | Name, course, instructor, semester, year level, **session type auto-detection** |
 | **Semesters** | GET, POST, PUT | Name, start/end date, status |
 | **Time Slots** | GET, POST, PUT, DELETE | Day, start/end time |
 | **Departments** | GET, POST, PUT, DELETE | Code, name |
@@ -171,7 +172,7 @@ sequenceDiagram
 - Random mutation with configurable rate
 - Elitism preserves top solutions
 - Early stopping when fitness plateaus
-- 6 **hard constraints** (room conflict, instructor overlap, capacity, time overlap, section duplication, student conflict)
+- **7 hard constraints** (room conflict, instructor overlap, capacity, time overlap, section duplication, student conflict, **room type**)
 - 5 **soft constraints** (idle gaps, back-to-back, day distribution, instructor idle, student idle)
 
 ### 📄 Schedule Export
@@ -181,7 +182,7 @@ sequenceDiagram
   - Color-coded cells: `#DBEAFE` blue=LECTURE, `#DCFCE7` green=LAB/Section, `#FEF3C7` beige=BREAK
   - AM/PM time format with zebra-striped time column
   - BREAK row between AM and PM sessions
-  - Course code + name, instructor name (no "Dr." prefix), room, session type in parentheses
+  - Course code + name, instructor name, room, session type in parentheses
   - Legend with colored boxes per session type + usage notes
   - Page number footer on every page with generation date
 - **Excel Export** — one sheet per year level, freeze pane, borders, color coding, auto-size columns
@@ -269,11 +270,12 @@ All endpoints prefixed with `/api` · Full interactive docs at `/swagger-ui/inde
 | `RoomCapacityConstraint` | Room capacity ≥ section size |
 | `InstructorTimeConflictConstraint` | No two assignments for the same instructor at the same time |
 | `StudentConflictConstraint` | No student enrolled in two sections with overlapping time slots |
+| `RoomTypeConstraint` | Room type matches section session type (e.g. LAB → LAB room) |
 
 #### Soft Constraints (optimization targets)
 
 | Constraint | Description | Weight |
-|---|---|---|---|
+|---|---|---|
 | `InstructorIdleSoftConstraint` | Minimize idle gaps between lectures | 1.0 |
 | `InstructorBackToBackConstraint` | Reduce consecutive lectures | 2.0 |
 | `SameCourseSameDayConstraint` | Spread same course across days | 1.0 |
@@ -348,7 +350,7 @@ com.example.timetable
 │   ├── request/              # Request DTOs with validation
 │   └── response/             # Response DTOs
 ├── entity/
-│   ├── enums/                # SessionType, YearLevel, SemesterStatus, UserRole
+│   ├── enums/                # SessionType, YearLevel, SemesterStatus, UserRole, RoomType
 │   ├── Course.java
 │   ├── Department.java
 │   ├── Instructor.java
@@ -373,7 +375,7 @@ com.example.timetable
 │   │   ├── Gene.java
 │   │   └── FitnessCalculator.java
 │   ├── constraints/
-│   │   ├── hard/             # 6 hard constraints
+│   │   ├── hard/             # 7 hard constraints (RoomTypeConstraint added)
 │   │   └── soft/             # 5 soft constraints
 │   ├── algorithm/
 │   │   └── config/           # GA config, constraint config
@@ -401,7 +403,7 @@ com.example.timetable
 ```bash
 # 1. Clone
 git clone https://github.com/MahmoudYoussef-web/Time-Table.git
-cd Time-Table
+cd Time-Table/backend
 
 # 2. Create database
 mysql -u root -p -e "CREATE DATABASE timetable_db;"
@@ -483,6 +485,40 @@ mvn test
 Tests included:
 - `SoftConstraintInjectionTest` — verifies all 10 constraints registered with positive weights
 - `GlobalExceptionHandlerTest` — verifies 404/400/409 error responses
+- `RoomCapacityConstraintTest` — verifies capacity checking logic
+- `RoomTypeConstraintTest` — verifies room type matching logic
+
+---
+
+## 📝 Changelog
+
+### v4 — Room Type System & Monorepo
+- Added `RoomType` enum (LECTURE_HALL, LAB, TUTORIAL_ROOM, SEMINAR_ROOM)
+- Added `RoomTypeConstraint` — 7th hard constraint enforcing room type matching
+- Added `Room.type` field to Room entity, DTOs, and mapper
+- Added auto session type detection for sections (LAB, TUTORIAL, etc.)
+- Added `RoomCapacityConstraintTest` with 6 test cases
+- Refactored project into monorepo: `backend/` + `frontend/`
+- Added complete React frontend application
+
+### v3 — Student Conflict & Enrollment
+- Added `StudentConflictConstraint` — 6th hard constraint preventing student double-booking
+- Added `findBySectionIdIn` batch query with `@EntityGraph` in `EnrollmentRepository`
+- Added enrollment preloading in `GeneticScheduleService` for student conflict detection
+- Updated tests to verify 6 hard constraints
+
+### v2 — PDF Redesign & Bug Fixes
+- Removed conflicting `constraints.SoftConstraint` interface
+- Removed `PasswordConfig.java` (duplicate bean)
+- Redesigned PDF with professional color scheme, summary page, legend, page numbers
+- Added session type display in PDF/Legend
+- Fixed "Dr." prefix issue in instructor names
+
+### v1 — Initial Release
+- Initial GA implementation
+- CRUD for all academic entities
+- Basic PDF and Excel export
+- JWT authentication
 
 ---
 
