@@ -14,6 +14,7 @@ public class RoomMapper {
         room.setBuilding(request.building());
         room.setRoomNumber(request.roomNumber());
         room.setCapacity(request.capacity());
+        room.setRoomType(request.roomType());
 
         return room;
     }
@@ -25,7 +26,8 @@ public class RoomMapper {
                 room.getId(),
                 room.getBuilding(),
                 room.getRoomNumber(),
-                room.getCapacity()
+                room.getCapacity(),
+                room.getRoomType()
         );
     }
 }

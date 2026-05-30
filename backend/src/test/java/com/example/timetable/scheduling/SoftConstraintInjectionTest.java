@@ -5,6 +5,7 @@ import com.example.timetable.scheduling.constraints.hard.InstructorAvailabilityC
 import com.example.timetable.scheduling.constraints.hard.InstructorConflictConstraint;
 import com.example.timetable.scheduling.constraints.hard.RoomCapacityConstraint;
 import com.example.timetable.scheduling.constraints.hard.RoomConflictConstraint;
+import com.example.timetable.scheduling.constraints.hard.RoomTypeConstraint;
 import com.example.timetable.scheduling.constraints.hard.StudentConflictConstraint;
 import com.example.timetable.scheduling.constraints.hard.TimeOverlapConstraint;
 import com.example.timetable.scheduling.constraints.soft.InstructorBackToBackConstraint;
@@ -34,6 +35,7 @@ class SoftConstraintInjectionTest {
             new InstructorConflictConstraint(),
             new RoomCapacityConstraint(),
             new RoomConflictConstraint(),
+            new RoomTypeConstraint(),
             new StudentConflictConstraint(),
             new TimeOverlapConstraint()
     );
@@ -45,7 +47,7 @@ class SoftConstraintInjectionTest {
 
     @Test
     void allHardConstraintsAreInjected() {
-        assertThat(hardConstraints).hasSize(6);
+        assertThat(hardConstraints).hasSize(7);
     }
 
     @Test

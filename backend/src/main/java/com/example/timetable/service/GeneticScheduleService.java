@@ -7,6 +7,8 @@ import com.example.timetable.scheduling.algorithm.Chromosome;
 import com.example.timetable.scheduling.algorithm.Gene;
 import com.example.timetable.scheduling.algorithm.GeneticAlgorithm;
 import com.example.timetable.scheduling.constraints.hard.InstructorAvailabilityConstraint;
+import com.example.timetable.scheduling.constraints.hard.RoomCapacityConstraint;
+import com.example.timetable.scheduling.constraints.hard.RoomTypeConstraint;
 import com.example.timetable.scheduling.constraints.hard.StudentConflictConstraint;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -32,6 +34,8 @@ public class GeneticScheduleService {
     private final SemesterRepository semesterRepository;
     private final InstructorAvailabilityConstraint availabilityConstraint;
     private final StudentConflictConstraint studentConflictConstraint;
+    private final RoomCapacityConstraint roomCapacityConstraint;
+    private final RoomTypeConstraint roomTypeConstraint;
     private final EnrollmentRepository enrollmentRepository;
     private final InstructorRepository instructorRepository;
 
@@ -82,6 +86,22 @@ public class GeneticScheduleService {
                         )
                 ));
         studentConflictConstraint.preload(sectionStudents);
+
+        Map<Long, Integer> enrollmentCounts = sectionStudents.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> e.getValue().size()
+                ));
+        roomCapacityConstraint.preload(enrollmentCounts);
+
+        Map<Long, SessionType> sectionTypes = sections.stream()
+                .collect(Collectors.toMap(
+                        Section::getId,
+                        s -> s.getSessionType() != null
+                                ? s.getSessionType()
+                                : SessionType.LECTURE
+                ));
+        roomTypeConstraint.preload(sectionTypes);
 
         Chromosome best = geneticAlgorithm.evolve(sections, rooms, slots);
 
@@ -159,9 +179,8 @@ public class GeneticScheduleService {
     }
 
     private SessionType determineSessionType(Section section) {
-        String name = section.getName().toUpperCase();
-        if (name.contains("LAB")) return SessionType.LAB;
-        if (name.contains("TUT")) return SessionType.TUTORIAL;
-        return SessionType.LECTURE;
+        return section.getSessionType() != null
+                ? section.getSessionType()
+                : SessionType.LECTURE;
     }
 }

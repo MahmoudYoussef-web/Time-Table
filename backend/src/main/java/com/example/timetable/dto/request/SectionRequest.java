@@ -1,5 +1,6 @@
 package com.example.timetable.dto.request;
 
+import com.example.timetable.entity.enums.SessionType;
 import com.example.timetable.entity.enums.YearLevel;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -22,5 +23,7 @@ public record SectionRequest(
         @Min(value = 1, message = "Capacity must be at least 1")
         int capacity,
 
-        YearLevel yearLevel
+        YearLevel yearLevel,
+
+        SessionType sessionType
 ) {}

@@ -65,6 +65,7 @@ public class RoomServiceImpl implements RoomService {
         room.setBuilding(request.building());
         room.setRoomNumber(request.roomNumber());
         room.setCapacity(request.capacity());
+        room.setRoomType(request.roomType());
 
         return RoomMapper.toResponse(roomRepository.save(room));
     }

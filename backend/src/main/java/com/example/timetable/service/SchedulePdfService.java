@@ -196,14 +196,10 @@ public class SchedulePdfService {
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell.setPadding(6);
 
-        Paragraph valP = new Paragraph(value, valFont);
-        valP.setAlignment(Element.ALIGN_CENTER);
-        valP.setSpacingAfter(2);
-        cell.addElement(valP);
-
-        Paragraph labelP = new Paragraph(label, labelFont);
-        labelP.setAlignment(Element.ALIGN_CENTER);
-        cell.addElement(labelP);
+        Phrase phrase = new Phrase();
+        phrase.add(new Chunk(value + "\n", valFont));
+        phrase.add(new Chunk(label, labelFont));
+        cell.setPhrase(phrase);
 
         table.addCell(cell);
     }

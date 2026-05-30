@@ -4,5 +4,6 @@ public enum SessionType {
     LECTURE,
     LAB,
     TUTORIAL,
-    SEMINAR
+    SEMINAR,
+    SECTION
 }

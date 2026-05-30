@@ -1,5 +1,6 @@
 package com.example.timetable.entity;
 
+import com.example.timetable.entity.enums.SessionType;
 import com.example.timetable.entity.enums.YearLevel;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -31,6 +32,10 @@ public class Section {
 
     @Column(nullable = false)
     private int capacity;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "session_type", length = 20)
+    private SessionType sessionType;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "year_level", length = 20)

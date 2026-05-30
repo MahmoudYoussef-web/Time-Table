@@ -22,6 +22,7 @@ public class SectionMapper {
         section.setSemester(semester);
         section.setCapacity(request.capacity());
         section.setYearLevel(request.yearLevel());
+        section.setSessionType(request.sessionType());
         return section;
     }
 
@@ -42,7 +43,8 @@ public class SectionMapper {
                 section.getCourse().getName(),
                 instructorName,
                 section.getCapacity(),
-                section.getYearLevel()
+                section.getYearLevel(),
+                section.getSessionType()
         );
     }
 }

@@ -1,5 +1,6 @@
 package com.example.timetable.dto.response;
 
+import com.example.timetable.entity.enums.SessionType;
 import com.example.timetable.entity.enums.YearLevel;
 
 public record SectionResponse(
@@ -10,5 +11,6 @@ public record SectionResponse(
         String courseName,
         String instructorName,
         int capacity,
-        YearLevel yearLevel
+        YearLevel yearLevel,
+        SessionType sessionType
 ) {}

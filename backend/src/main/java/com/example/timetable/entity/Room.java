@@ -1,5 +1,6 @@
 package com.example.timetable.entity;
 
+import com.example.timetable.entity.enums.RoomType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,6 +33,11 @@ public class Room {
     // Maximum student capacity
     @Column(nullable = false)
     private int capacity;
+
+    // Room type (LECTURE_HALL, LAB, SEMINAR_ROOM)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "room_type", length = 30)
+    private RoomType roomType;
 
     // Schedule entries in this room
     @OneToMany(mappedBy = "room", fetch = FetchType.LAZY)

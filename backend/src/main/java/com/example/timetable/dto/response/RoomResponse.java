@@ -1,6 +1,7 @@
 package com.example.timetable.dto.response;
 
 
+import com.example.timetable.entity.enums.RoomType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -12,4 +13,5 @@ public class RoomResponse {
     private String building;
     private String roomNumber;
     private int capacity;
+    private RoomType roomType;
 }
