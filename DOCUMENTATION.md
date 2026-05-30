@@ -31,7 +31,7 @@ Timetable Scheduler automates university timetable generation using a **Genetic 
 ### 1.2 Key Capabilities
 - **CRUD Management** — Full REST API for managing courses, instructors, rooms, sections, semesters, time slots, departments
 - **GA Schedule Generation** — Asynchronous GA with configurable population, generations, crossover, mutation
-- **Hard Constraints** — 5 hard constraints ensuring zero conflicts (room, instructor, capacity, time, availability)
+- **Hard Constraints** — 6 hard constraints ensuring zero conflicts (room, instructor, capacity, time, availability, student)
 - **Soft Constraints** — 5 soft constraints optimizing schedule quality (idle gaps, back-to-back, day distribution)
 - **PDF Export** — Professional A4 landscape PDF with color-coded tables per year level
 - **Excel Export** — Multi-sheet workbook with freeze panes and colors
@@ -170,7 +170,7 @@ com.example.timetable/
 │   │   ├── Gene.java
 │   │   └── GeneticAlgorithm.java
 │   └── constraints/
-│       ├── hard/                        # 5 hard constraints
+│       ├── hard/                        # 6 hard constraints
 │       ├── soft/                        # 5 soft constraints (interface + implementations)
 │       ├── Constraint.java
 │       ├── ConstraintType.java
@@ -347,6 +347,7 @@ Constraint (interface)
 | `TimeOverlapConstraint` | No overlapping times for same section, room, or instructor | `violations()` |
 | `RoomCapacityConstraint` | Room capacity ≥ section enrollment | `violations()` |
 | `InstructorAvailabilityConstraint` | Instructor available during slot (thread-safe cache) | `violations()` |
+| `StudentConflictConstraint` | No student enrolled in two sections with overlapping times (preloaded enrollment map) | `violations()` |
 
 Hard constraints are injected via `List<HardConstraint>` into `FitnessCalculator`.
 
@@ -720,6 +721,27 @@ mvn spring-boot:run  # Run application
 3. Implement `getName()`, `violations(Chromosome)`, optionally `explain()`
 4. Spring auto-injects it into `FitnessCalculator`
 
+**Tip:** If your constraint needs external data (e.g. enrollment maps, availability caches), use the preload pattern:
+
+```java
+@Component
+public class MyConstraint implements HardConstraint {
+    private final Map<K, V> cache = new ConcurrentHashMap<>();
+
+    public void preload(Map<K, V> data) {
+        cache.clear();
+        cache.putAll(data);
+    }
+
+    @Override
+    public int violations(Chromosome chromosome) {
+        // Use cache — no DB calls during GA evaluation
+    }
+}
+```
+
+Then in `GeneticScheduleService`, inject and preload before `geneticAlgorithm.evolve()`.
+
 ### 12.6 Testing the PDF
 
 ```bash
@@ -746,7 +768,13 @@ curl -X GET http://localhost:8081/api/schedules/{id}/pdf \
 
 ## 📝 Changelog
 
-### v2 (Current)
+### v3 (Current)
+- Added `StudentConflictConstraint` — 6th hard constraint preventing student double-booking
+- Added `findBySectionIdIn` batch query with `@EntityGraph` in `EnrollmentRepository`
+- Added enrollment preloading in `GeneticScheduleService` for student conflict detection
+- Updated tests to verify 6 hard constraints
+
+### v2
 - Removed conflicting `constraints.SoftConstraint` interface
 - Removed `PasswordConfig.java` (duplicate bean)
 - Removed `SoftConstraintConfig.java` (auto-injection instead)

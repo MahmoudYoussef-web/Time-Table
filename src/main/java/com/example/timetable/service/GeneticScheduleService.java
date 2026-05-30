@@ -7,6 +7,7 @@ import com.example.timetable.scheduling.algorithm.Chromosome;
 import com.example.timetable.scheduling.algorithm.Gene;
 import com.example.timetable.scheduling.algorithm.GeneticAlgorithm;
 import com.example.timetable.scheduling.constraints.hard.InstructorAvailabilityConstraint;
+import com.example.timetable.scheduling.constraints.hard.StudentConflictConstraint;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,8 @@ public class GeneticScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final SemesterRepository semesterRepository;
     private final InstructorAvailabilityConstraint availabilityConstraint;
+    private final StudentConflictConstraint studentConflictConstraint;
+    private final EnrollmentRepository enrollmentRepository;
     private final InstructorRepository instructorRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -54,6 +57,23 @@ public class GeneticScheduleService {
                 .flatMap(i -> i.getUnavailableSlots().stream())
                 .collect(Collectors.toSet());
         availabilityConstraint.preload(allUnavailable);
+
+        // Preload student-enrollment map for StudentConflictConstraint
+        List<Long> sectionIds = sections.stream()
+                .map(Section::getId)
+                .collect(Collectors.toList());
+        Map<Long, Set<Long>> sectionStudents = enrollmentRepository
+                .findBySectionIdIn(sectionIds)
+                .stream()
+                .filter(e -> "ACTIVE".equals(e.getStatus()))
+                .collect(Collectors.groupingBy(
+                        e -> e.getSection().getId(),
+                        Collectors.mapping(
+                                e -> e.getStudent().getId(),
+                                Collectors.toSet()
+                        )
+                ));
+        studentConflictConstraint.preload(sectionStudents);
 
         Chromosome best = geneticAlgorithm.evolve(sections, rooms, slots);
 

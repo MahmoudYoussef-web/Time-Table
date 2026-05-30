@@ -88,7 +88,7 @@ graph TD
         GA --> Selection[TournamentSelection]
         GA --> Crossover[SinglePointCrossover]
         GA --> Mutation[RandomMutation]
-        Fitness --> HardConstraints[Hard Constraints<br/>Room · Instructor · Capacity · Time]
+        Fitness --> HardConstraints[Hard Constraints<br/>Room · Instructor · Capacity · Time · Student]
         Fitness --> SoftConstraints[Soft Constraints<br/>Idle Gaps · Back-to-Back · Day Distribution]
     end
 
@@ -171,7 +171,7 @@ sequenceDiagram
 - Random mutation with configurable rate
 - Elitism preserves top solutions
 - Early stopping when fitness plateaus
-- 5 **hard constraints** (room conflict, instructor overlap, capacity, time overlap, section duplication)
+- 6 **hard constraints** (room conflict, instructor overlap, capacity, time overlap, section duplication, student conflict)
 - 5 **soft constraints** (idle gaps, back-to-back, day distribution, instructor idle, student idle)
 
 ### 📄 Schedule Export
@@ -268,6 +268,7 @@ All endpoints prefixed with `/api` · Full interactive docs at `/swagger-ui/inde
 | `SectionTimeConflictConstraint` | No overlapping time slots for the same section |
 | `RoomCapacityConstraint` | Room capacity ≥ section size |
 | `InstructorTimeConflictConstraint` | No two assignments for the same instructor at the same time |
+| `StudentConflictConstraint` | No student enrolled in two sections with overlapping time slots |
 
 #### Soft Constraints (optimization targets)
 
@@ -372,7 +373,7 @@ com.example.timetable
 │   │   ├── Gene.java
 │   │   └── FitnessCalculator.java
 │   ├── constraints/
-│   │   ├── hard/             # 5 hard constraints
+│   │   ├── hard/             # 6 hard constraints
 │   │   └── soft/             # 5 soft constraints
 │   ├── algorithm/
 │   │   └── config/           # GA config, constraint config
