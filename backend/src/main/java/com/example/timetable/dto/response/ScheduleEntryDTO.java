@@ -1,0 +1,33 @@
+package com.example.timetable.dto.response;
+
+public record ScheduleEntryDTO(
+
+        Long sectionId,
+
+        String sectionName,
+
+        String courseCode,
+
+        String courseName,
+
+        String instructorName,
+
+        String roomNumber,
+
+        String departmentName,
+
+        String dayOfWeek,
+
+        String startTime,
+
+        String endTime,
+
+        String yearLevel,
+
+        String sessionType,
+
+        int hardViolations,
+
+        int softViolations
+
+) {}
