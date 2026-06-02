@@ -1,8 +1,13 @@
 import axios from 'axios';
 import { parseJwt } from '../lib/utils';
 
+const rawUrl = import.meta.env.VITE_API_URL || '';
+const baseURL = rawUrl
+  ? rawUrl.replace(/\/?$/, '') + '/api'
+  : '/api';
+
 const client = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL,
   headers: { 'Content-Type': 'application/json' },
 });
 

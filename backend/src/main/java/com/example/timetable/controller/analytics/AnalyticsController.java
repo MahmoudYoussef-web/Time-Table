@@ -19,7 +19,7 @@ public class AnalyticsController {
     private final AnalyticsService analyticsService;
 
     @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER','INSTRUCTOR')")
-    @GetMapping
+    @GetMapping("/dashboard")
     @Operation(summary = "Get analytics data")
     @ApiResponse(responseCode = "200", description = "Analytics data retrieved")
     public ResponseEntity<AnalyticsResponse> getAnalytics() {

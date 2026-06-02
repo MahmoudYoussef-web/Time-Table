@@ -27,6 +27,15 @@ public class ScheduleController {
 
 
     // ===============================
+    // List All Schedules
+    // ===============================
+    @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER')")
+    @GetMapping
+    public ResponseEntity<List<com.example.timetable.dto.response.ScheduleSummaryResponse>> findAll() {
+        return ResponseEntity.ok(scheduleService.findAll());
+    }
+
+    // ===============================
     // Generate Schedule (Async)
     // ===============================
     @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER')")
