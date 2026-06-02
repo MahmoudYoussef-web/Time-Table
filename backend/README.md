@@ -524,13 +524,9 @@ Tests included:
 
 ## 👤 Author
 
-**Mahmoud Youssef** · El Shorouk Academy, 2026
+**Mahmoud Youssef**
 
 [![GitHub](https://img.shields.io/badge/GitHub-MahmoudYoussef--web-181717?style=flat-square&logo=github)](https://github.com/MahmoudYoussef-web)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-mahmoud--youssef--dev-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/mahmoud-youssef-dev/)
 
 ---
-
-<div align="center">
-  <sub>Open to remote & international opportunities · Graduation Project 2026</sub>
-</div>

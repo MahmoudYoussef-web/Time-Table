@@ -144,7 +144,5 @@ cd frontend && npm test
 ---
 
 <div align="center">
-  <sub>Graduation Project 2026 — Mahmoud Youssef · El Shorouk Academy</sub>
-  <br/>
   <a href="https://github.com/MahmoudYoussef-web"><img src="https://img.shields.io/badge/GitHub-MahmoudYoussef--web-181717?style=flat-square&logo=github"/></a>
 </div>
