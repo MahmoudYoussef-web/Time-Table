@@ -1,8 +1,8 @@
 export const YEAR_LEVELS = ['FIRST', 'SECOND', 'THIRD', 'FOURTH'] as const;
 export const SESSION_TYPES = ['LECTURE', 'LAB', 'SECTION', 'TUTORIAL', 'SEMINAR'] as const;
-export const ROOM_TYPES = ['LECTURE_HALL', 'LAB', 'SEMINAR_ROOM', 'TUTORIAL_ROOM'] as const;
+export const ROOM_TYPES = ['LECTURE_HALL', 'LAB', 'SEMINAR_ROOM'] as const;
 export const DAYS_OF_WEEK = ['SATURDAY', 'SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY'] as const;
-export const SEMESTER_STATUSES = ['DRAFT', 'ACTIVE', 'PUBLISHED', 'CLOSED'] as const;
+export const SEMESTER_STATUSES = ['DRAFT', 'PUBLISHED', 'CLOSED'] as const;
 export const SCHEDULE_STATUSES = ['DRAFT', 'VALIDATED', 'LOCKED', 'PUBLISHED'] as const;
 export const ENROLLMENT_STATUSES = ['ACTIVE', 'DROPPED', 'COMPLETED'] as const;
 

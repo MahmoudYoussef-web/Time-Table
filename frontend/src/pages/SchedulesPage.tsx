@@ -28,6 +28,7 @@ export function SchedulesPage() {
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<ScheduleSummary | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [exportOpen, setExportOpen] = useState<number | null>(null);
 
   const fetchData = async () => {
     try {
@@ -152,23 +153,26 @@ export function SchedulesPage() {
                           onClick={() => navigate(`/schedules/${s.id}/weekly`)}
                           className="p-1.5 rounded hover:bg-[--border] transition-colors"
                         ><CalendarDays size={16} /></button>
-                        <div className="relative group">
+                        <div className="relative">
                           <button
                             title="Export"
+                            onClick={() => setExportOpen(exportOpen === s.id ? null : s.id)}
                             className="p-1.5 rounded hover:bg-[--border] transition-colors"
                           ><Download size={16} /></button>
-                          <div className="absolute right-0 top-full mt-1 bg-[--surface] border border-[--border] rounded-lg shadow-lg py-1 min-w-[160px] hidden group-hover:block z-10">
-                            <button onClick={() => handleExport(s.id, 'pdf')} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-[--muted]">
+                          {exportOpen === s.id && (
+                          <div className="absolute right-0 top-full mt-1 bg-[--surface] border border-[--border] rounded-lg shadow-lg py-1 min-w-[160px] z-10">
+                            <button onClick={() => { handleExport(s.id, 'pdf'); setExportOpen(null); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-[--muted]">
                               <FileText size={14} /> Export PDF
                             </button>
-                            <button onClick={() => handleExport(s.id, 'excel')} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-[--muted]">
+                            <button onClick={() => { handleExport(s.id, 'excel'); setExportOpen(null); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-[--muted]">
                               <Table2 size={14} /> Export Excel
                             </button>
-                            <button onClick={() => handleExport(s.id, 'png')} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-[--muted]">
+                            <button onClick={() => { handleExport(s.id, 'png'); setExportOpen(null); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-[--muted]">
                               <Image size={14} /> Export PNG
                             </button>
                           </div>
-                        </div>
+                          )}
+                          </div>
                         {s.status === 'DRAFT' && (
                           <>
                             <button

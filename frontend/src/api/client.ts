@@ -16,7 +16,9 @@ client.interceptors.request.use((config) => {
   if (token) {
     const decoded = parseJwt(token);
     if (!decoded || decoded.exp * 1000 < Date.now()) {
-      localStorage.clear();
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('role');
       window.location.href = '/auth';
       return Promise.reject(new Error('Token expired'));
     }

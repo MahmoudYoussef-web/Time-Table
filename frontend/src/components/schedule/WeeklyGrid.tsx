@@ -197,12 +197,8 @@ export const WeeklyGrid = memo(function WeeklyGrid({ data, scheduleId, showFilte
               <p className="body-md text-[--muted-foreground]">No violations found.</p>
             ) : (
               conflicts.map((v, i) => {
-                const isHard = v.constraintName.toLowerCase().includes('soft') ? 'soft' : 'hard';
-                const colors = isHard === 'hard'
-                  ? 'border-l-2 border-[--destructive] bg-[--destructive]/5'
-                  : 'border-l-2 border-[--warning] bg-[--warning]/5';
                 return (
-                  <div key={i} className={`${colors} p-3 rounded-[--radius-sm] mb-2`}>
+                  <div key={i} className="border-l-2 border-[--destructive] bg-[--destructive]/5 p-3 rounded-[--radius-sm] mb-2">
                     <p className="label-sm font-semibold">{v.constraintName}</p>
                     <p className="label-sm text-[--muted-foreground]">{v.message}</p>
                   </div>

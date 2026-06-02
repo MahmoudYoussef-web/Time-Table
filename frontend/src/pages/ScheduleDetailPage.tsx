@@ -83,8 +83,6 @@ export function ScheduleDetailPage() {
   }
 
   const statusStyle = STATUS_STYLES[schedule.status] ?? { bg: '#F3F4F6', text: '#374151' };
-  const hardConflicts = conflicts.filter(c => !c.constraintName.toLowerCase().includes('soft'));
-  const softConflicts = conflicts.filter(c => c.constraintName.toLowerCase().includes('soft'));
 
   return (
     <div>
@@ -161,14 +159,8 @@ export function ScheduleDetailPage() {
           <p className="text-sm text-[--muted-foreground] py-8 text-center">No violations found.</p>
         ) : (
           <div className="space-y-2">
-            {hardConflicts.map((v, i) => (
-              <div key={i} className="border-l-2 border-red-500 bg-red-50/50 dark:bg-red-950/20 p-3 rounded-r-[--radius-sm]">
-                <p className="text-sm font-medium">{v.constraintName}</p>
-                <p className="text-xs text-[--text-secondary] mt-0.5">{v.message}</p>
-              </div>
-            ))}
-            {softConflicts.map((v, i) => (
-              <div key={i} className="border-l-2 border-orange-400 bg-orange-50/50 dark:bg-orange-950/20 p-3 rounded-r-[--radius-sm]">
+            {conflicts.map((v, i) => (
+              <div key={i} className="border-l-2 border-[--destructive] bg-[--destructive]/5 p-3 rounded-r-[--radius-sm]">
                 <p className="text-sm font-medium">{v.constraintName}</p>
                 <p className="text-xs text-[--text-secondary] mt-0.5">{v.message}</p>
               </div>
