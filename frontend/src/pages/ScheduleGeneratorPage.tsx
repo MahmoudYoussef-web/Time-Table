@@ -4,7 +4,7 @@ import { Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { Semester } from '../types';
 import { getSemesters } from '../api/semesters';
-import { generateSchedule, getConflicts, downloadPdf, downloadExcel, downloadPng } from '../api/schedules';
+import { generateSchedule, downloadPdf, downloadExcel, downloadPng } from '../api/schedules';
 import { useScheduleJob } from '../hooks/useScheduleJob';
 import { useScheduleStore } from '../store/scheduleStore';
 import { GenerationStatus } from '../components/schedule/GenerationStatus';
@@ -130,7 +130,6 @@ export function ScheduleGeneratorPage() {
               onDownloadPdf={handleDownloadPdf}
               onDownloadExcel={handleDownloadExcel}
               onDownloadPng={handleDownloadPng}
-              onViewConflicts={() => {}}
             />
           </motion.div>
         )}

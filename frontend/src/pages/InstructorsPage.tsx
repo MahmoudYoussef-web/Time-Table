@@ -61,7 +61,7 @@ export function InstructorsPage() {
   };
 
   const { filtered, search, setSearch, filters, setFilters } = useTableFilter(
-    instructors as unknown as Record<string, unknown>[],
+    instructors,
     ['name', 'email', 'departmentName'],
   );
 

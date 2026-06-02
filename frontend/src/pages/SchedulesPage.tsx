@@ -4,7 +4,6 @@ import { Calendar, CalendarDays, Download, FileText, Image, Lock, Table2, Eye, T
 import { toast } from 'sonner';
 import { ScheduleSummary } from '../types';
 import * as schedulesApi from '../api/schedules';
-import { Table } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ConfirmModal } from '../components/ui/ConfirmModal';

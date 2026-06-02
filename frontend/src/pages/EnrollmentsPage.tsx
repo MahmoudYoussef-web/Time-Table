@@ -78,7 +78,7 @@ export function EnrollmentsPage() {
   };
 
   const { filtered, search, setSearch, filters, setFilters } = useTableFilter(
-    enrollments as unknown as Record<string, unknown>[],
+    enrollments,
     ['studentName', 'sectionName', 'courseName', 'status'],
   );
 

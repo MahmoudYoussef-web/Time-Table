@@ -1,10 +1,7 @@
-import { Loader2, CheckCircle, XCircle, Grid3x3, FileText, Table as TableIcon, Image, AlertTriangle, RotateCcw } from 'lucide-react';
-import { ScheduleGenerationJob, ConstraintViolation } from '../../types';
+import { Loader2, CheckCircle, XCircle, Grid3x3, FileText, Table as TableIcon, Image, RotateCcw } from 'lucide-react';
+import { ScheduleGenerationJob } from '../../types';
 import { formatDuration } from '../../lib/utils';
 import { Button } from '../ui/Button';
-import { downloadPdf, downloadExcel, downloadPng } from '../../api/schedules';
-import { ConflictBadge } from './ConflictBadge';
-import { useNavigate } from 'react-router-dom';
 
 interface GenerationStatusProps {
   job: ScheduleGenerationJob | null;
@@ -14,14 +11,12 @@ interface GenerationStatusProps {
   onDownloadPdf: () => void;
   onDownloadExcel: () => void;
   onDownloadPng: () => void;
-  onViewConflicts: () => void;
 }
 
 export function GenerationStatus({
   job, elapsedSeconds, onViewSchedule, onRetry,
-  onDownloadPdf, onDownloadExcel, onDownloadPng, onViewConflicts
+  onDownloadPdf, onDownloadExcel, onDownloadPng
 }: GenerationStatusProps) {
-  const navigate = useNavigate();
 
   if (!job || job.status === 'RUNNING') {
     return (

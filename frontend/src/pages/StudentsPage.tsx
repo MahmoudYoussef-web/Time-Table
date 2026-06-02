@@ -71,7 +71,7 @@ export function StudentsPage() {
   };
 
   const { filtered, search, setSearch, filters, setFilters } = useTableFilter(
-    students as unknown as Record<string, unknown>[],
+    students,
     ['fullName', 'email', 'departmentName'],
   );
 

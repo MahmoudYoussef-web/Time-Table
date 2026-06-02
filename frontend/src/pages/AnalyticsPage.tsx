@@ -116,7 +116,7 @@ export function AnalyticsPage() {
                 <YAxis tick={{ fontSize: 11 }} unit="%" />
                 <Tooltip
                   contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px' }}
-                  formatter={(value: number) => [`${value.toFixed(1)}%`, 'Utilization']}
+                  formatter={(value) => [`${Number(value).toFixed(1)}%`, 'Utilization']}
                 />
                 <Bar dataKey="Utilization" fill="#3B82F6" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -136,7 +136,7 @@ export function AnalyticsPage() {
                 <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={80} />
                 <Tooltip
                   contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px' }}
-                  formatter={(value: number) => [`${value.toFixed(1)}h`, 'Hours']}
+                  formatter={(value) => [`${Number(value).toFixed(1)}h`, 'Hours']}
                 />
                 <Bar dataKey="Hours" fill="#10B981" radius={[0, 4, 4, 0]} />
               </BarChart>
@@ -177,7 +177,7 @@ export function AnalyticsPage() {
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip
                   contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px' }}
-                  formatter={(value: number) => [`${value} sections`, 'Sections']}
+                  formatter={(value) => [`${value} sections`, 'Sections']}
                 />
                 <Bar dataKey="Sections" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
               </BarChart>

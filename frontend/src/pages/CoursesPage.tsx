@@ -9,7 +9,6 @@ import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { EmptyState } from '../components/ui/EmptyState';
-import { ErrorState } from '../components/ui/ErrorState';
 import { CourseForm } from '../components/forms/CourseForm';
 import { useTableFilter } from '../hooks/useTableFilter';
 
@@ -72,7 +71,7 @@ export function CoursesPage() {
   };
 
   const { filtered, search, setSearch, filters, setFilters } = useTableFilter(
-    courses as unknown as Record<string, unknown>[],
+    courses,
     ['name', 'code'],
   );
 

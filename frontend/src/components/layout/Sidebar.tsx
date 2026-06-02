@@ -6,7 +6,7 @@ import {
 import { useAuthStore } from '../../store/authStore';
 import { useScheduleStore } from '../../store/scheduleStore';
 
-type NavItem = { icon: React.ElementType; label: string; to: string; roles: string[] };
+type NavItem = { icon: React.ElementType; label: string; to: string; roles: string[]; dynamic?: boolean };
 
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', to: '/dashboard', roles: ['ADMIN', 'SCHEDULER', 'INSTRUCTOR'] },

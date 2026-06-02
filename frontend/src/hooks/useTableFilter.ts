@@ -13,7 +13,7 @@ interface UseTableFilterResult<T> {
   clearFilters: () => void;
 }
 
-export function useTableFilter<T extends Record<string, unknown>>(
+export function useTableFilter<T>(
   data: T[] = [],
   searchFields: string[] = [],
 ): UseTableFilterResult<T> {
@@ -22,11 +22,12 @@ export function useTableFilter<T extends Record<string, unknown>>(
 
   const filtered = useMemo(() => {
     return data.filter(item => {
+      const record = item as Record<string, unknown>;
       const matchesSearch = !search || searchFields.some(field =>
-        String(item[field] ?? '').toLowerCase().includes(search.toLowerCase()),
+        String(record[field] ?? '').toLowerCase().includes(search.toLowerCase()),
       );
       const matchesFilters = Object.entries(filters).every(([key, val]) =>
-        !val || String(item[key] ?? '') === val,
+        !val || String(record[key] ?? '') === val,
       );
       return matchesSearch && matchesFilters;
     });

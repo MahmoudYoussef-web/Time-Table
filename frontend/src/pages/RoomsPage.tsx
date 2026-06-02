@@ -4,7 +4,6 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { Room, RoomType, RoomRequest } from '../types';
 import { getRooms, createRoom, updateRoom, deleteRoom } from '../api/rooms';
-import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { RoomForm } from '../components/forms/RoomForm';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
@@ -98,7 +97,7 @@ export function RoomsPage() {
   };
 
   const { filtered, search, setSearch, filters, setFilters } = useTableFilter(
-    rooms as unknown as Record<string, unknown>[],
+    rooms,
     ['building', 'roomNumber'],
   );
 

@@ -75,7 +75,7 @@ export function SectionsPage() {
   };
 
   const { filtered, search, setSearch, filters, setFilters } = useTableFilter(
-    sections as unknown as Record<string, unknown>[],
+    sections,
     ['name', 'courseCode', 'courseName', 'instructorName'],
   );
 
