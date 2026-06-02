@@ -4,6 +4,7 @@ import com.example.timetable.entity.Student;
 import com.example.timetable.repository.StudentRepository;
 import com.example.timetable.service.StudentService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +13,7 @@ import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional
 public class StudentServiceImpl implements StudentService {
 
@@ -44,3 +46,4 @@ public class StudentServiceImpl implements StudentService {
         studentRepository.deleteById(id);
     }
 }
+

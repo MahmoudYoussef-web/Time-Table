@@ -2,6 +2,8 @@ package com.example.timetable.auth.service;
 
 import com.example.timetable.auth.dto.AuthResponse;
 import com.example.timetable.auth.dto.LoginRequest;
+import com.example.timetable.auth.dto.PasswordChangeRequest;
+import com.example.timetable.auth.dto.ProfileUpdateRequest;
 import com.example.timetable.auth.dto.RegisterRequest;
 import com.example.timetable.auth.jwt.JwtUtil;
 import com.example.timetable.entity.User;
@@ -15,6 +17,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Service
 @RequiredArgsConstructor
@@ -58,6 +63,34 @@ public class AuthService {
                         savedUser.getEmail()
                 )
         );
+    }
+
+    // =========================
+    // Update Profile
+    // =========================
+    public void updateProfile(ProfileUpdateRequest request) {
+        User user = getCurrentUser();
+        user.setFullName(request.getFullName());
+        userRepository.save(user);
+    }
+
+    // =========================
+    // Change Password
+    // =========================
+    public void changePassword(PasswordChangeRequest request) {
+        User user = getCurrentUser();
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new InvalidCredentialsException("Current password is incorrect");
+        }
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
     // =========================

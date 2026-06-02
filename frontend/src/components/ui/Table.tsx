@@ -1,6 +1,5 @@
 import { Pencil, Trash2, FileX } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { cn } from '../../lib/utils';
 import { Spinner } from './Spinner';
 
 interface Column<T> {
@@ -20,8 +19,9 @@ interface TableProps<T> {
 }
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } };
-const item = { hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' } } };
+const rowItem = { hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' as const } } };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function Table<T extends { [key: string]: any }>({
   columns,
   data,
@@ -63,7 +63,7 @@ export function Table<T extends { [key: string]: any }>({
           {data.map((item, idx) => (
             <motion.tr
               key={String(item[keyField] ?? idx)}
-              variants={item}
+              variants={rowItem}
               className="group border-b border-[--border] hover:bg-[--muted]/40 transition-colors"
               style={{ borderBottomWidth: '0.5px' }}
             >

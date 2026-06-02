@@ -184,7 +184,7 @@ public class ScheduleRenderModel {
     private static String buildDateRange(ScheduleDTO s) {
         String start = s.getStartDate() != null ? s.getStartDate() : "N/A";
         String end = s.getEndDate() != null ? s.getEndDate() : "N/A";
-        return "\uD83D\uDCC5 For The Week: " + start + " \u2014 " + end;
+        return start + " \u2014 " + end;
     }
 
     private static String buildFooter() {
@@ -243,7 +243,8 @@ public class ScheduleRenderModel {
                             e.courseName(),
                             e.instructorName(),
                             roomLabel + e.roomNumber(),
-                            false
+                            false,
+                            e.hardViolations() > 0
                     ));
                 } else {
                     courseRow.getCells().add(CellContent.EMPTY);
@@ -299,20 +300,22 @@ public class ScheduleRenderModel {
     }
 
     public static class CellContent {
-        public static final CellContent EMPTY = new CellContent("", "", "", "", true);
+        public static final CellContent EMPTY = new CellContent("", "", "", "", true, false);
 
         private final String courseCode;
         private final String courseName;
         private final String instructor;
         private final String room;
         private final boolean empty;
+        private final boolean conflict;
 
-        public CellContent(String courseCode, String courseName, String instructor, String room, boolean empty) {
+        public CellContent(String courseCode, String courseName, String instructor, String room, boolean empty, boolean conflict) {
             this.courseCode = courseCode;
             this.courseName = courseName;
             this.instructor = instructor;
             this.room = room;
             this.empty = empty;
+            this.conflict = conflict;
         }
 
         public String getCourseCode() { return courseCode; }
@@ -320,6 +323,7 @@ public class ScheduleRenderModel {
         public String getInstructor() { return instructor; }
         public String getRoom() { return room; }
         public boolean isEmpty() { return empty; }
+        public boolean hasConflict() { return conflict; }
     }
 
     private static class Builder {

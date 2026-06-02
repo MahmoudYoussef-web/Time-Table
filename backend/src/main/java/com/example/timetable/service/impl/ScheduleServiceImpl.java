@@ -1,6 +1,7 @@
 package com.example.timetable.service.impl;
 
 import com.example.timetable.dto.response.ScheduleDTO;
+import com.example.timetable.dto.response.ScheduleSummaryResponse;
 import com.example.timetable.entity.Schedule;
 import com.example.timetable.entity.ScheduleEntry;
 import com.example.timetable.entity.ScheduleGenerationJob;
@@ -21,9 +22,11 @@ import com.example.timetable.service.ScheduleService;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,6 +35,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional
 public class ScheduleServiceImpl implements ScheduleService {
 
@@ -70,6 +74,30 @@ public class ScheduleServiceImpl implements ScheduleService {
     public ScheduleGenerationJob getJob(UUID jobId) {
         return jobRepository.findById(jobId)
                 .orElseThrow(() -> new NoSuchElementException("Job not found"));
+    }
+
+    @Override
+    public List<ScheduleSummaryResponse> findAll() {
+        return scheduleRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
+                .stream()
+                .map(s -> new ScheduleSummaryResponse(
+                        s.getId(),
+                        s.getSemester().getName(),
+                        s.getStatus().name(),
+                        s.getFitnessScore(),
+                        s.getHardViolations(),
+                        s.getSoftViolations(),
+                        s.getCreatedAt().toString()
+                ))
+                .toList();
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        Schedule schedule = getScheduleEntity(id);
+        if (schedule.getStatus() != ScheduleStatus.DRAFT)
+            throw new IllegalStateException("Cannot delete a published or locked schedule");
+        scheduleRepository.delete(schedule);
     }
 
     @Override

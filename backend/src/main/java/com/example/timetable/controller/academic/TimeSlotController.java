@@ -9,6 +9,7 @@ import com.example.timetable.service.TimeSlotService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -41,7 +42,7 @@ public class TimeSlotController {
     ) {
         TimeSlot timeSlot = TimeSlotMapper.toEntity(request);
         TimeSlot saved = timeSlotService.save(timeSlot);
-        return ResponseEntity.ok(TimeSlotMapper.toResponse(saved));
+        return ResponseEntity.status(HttpStatus.CREATED).body(TimeSlotMapper.toResponse(saved));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

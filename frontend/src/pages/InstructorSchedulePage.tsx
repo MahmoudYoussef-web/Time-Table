@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { CalendarOff } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { getMySchedule } from '../api/weeklySchedule';
 import { WeeklyGrid } from '../components/schedule/WeeklyGrid';
 import { WeeklyScheduleDTO } from '../types';
@@ -29,17 +29,18 @@ export function InstructorSchedulePage() {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4">
         <CalendarOff className="w-12 h-12 text-[--muted-foreground]" />
-        <p className="headline-md text-[--muted-foreground]">No schedule assigned yet</p>
+        <p className="display-md text-[--muted-foreground]">No schedule assigned yet</p>
       </div>
     );
   }
 
   return (
     <div>
-      <h1 className="headline-lg mb-6">My Schedule</h1>
+      <h1 className="display-lg mb-6">My Schedule</h1>
       <div className="bg-[--card] border border-[--border] rounded-[--radius-md] p-4">
         <WeeklyGrid data={data} showFilter={false} showExport={false} />
       </div>
     </div>
   );
 }
+

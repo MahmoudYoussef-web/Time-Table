@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Menu, Sun, Moon } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { useAuthStore } from '../../store/authStore';
@@ -30,7 +30,6 @@ export function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dark, setDark] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
 
   useEffect(() => {
@@ -68,7 +67,7 @@ export function AppShell() {
       <div className="flex flex-col flex-1 min-w-0">
         <header className="h-14 border-b border-[--border] flex items-center justify-between px-6 bg-[--background]" style={{ borderBottomWidth: '0.5px' }}>
           <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen((p) => !p)} className="md:hidden cursor-pointer">
+            <button onClick={() => setSidebarOpen((p) => !p)} className="md:hidden cursor-pointer" aria-label="Toggle sidebar">
               <Menu size={20} />
             </button>
             <span className="display-sm">{pageTitle}</span>
@@ -87,7 +86,7 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">
+        <main id="main-content" className="flex-1 overflow-y-auto p-6 md:p-8">
           <Outlet />
         </main>
       </div>

@@ -38,7 +38,7 @@ export const SESSION_COLORS: Record<SessionType, { bg: string; border: string }>
   SEMINAR:  { bg: '#F3E8FF', border: '#d8b4fe' },
 };
 
-export function parseJwt(token: string): Record<string, unknown> | null {
+export function parseJwt(token: string): { email: string; role: string; exp: number } | null {
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');

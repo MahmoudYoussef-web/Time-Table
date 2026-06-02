@@ -1,6 +1,7 @@
 package com.example.timetable.scheduling;
 
-import com.example.timetable.exception.ApiError;
+import com.example.timetable.exception.DuplicateResourceException;
+import com.example.timetable.exception.ErrorResponse;
 import com.example.timetable.exception.GlobalExceptionHandler;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
@@ -23,11 +24,23 @@ class GlobalExceptionHandlerTest {
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRequestURI()).thenReturn("/api/test");
 
-        ResponseEntity<ApiError> response = handler.handleNoSuchElement(
+        ResponseEntity<ErrorResponse> response = handler.handleNoSuchElement(
                 new NoSuchElementException("Not found"), request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(Objects.requireNonNull(response.getBody()).getMessage()).isEqualTo("Not found");
+        assertThat(Objects.requireNonNull(response.getBody()).message()).isEqualTo("Not found");
+    }
+
+    @Test
+    void handleDuplicateResourceReturns409() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/api/departments");
+
+        ResponseEntity<ErrorResponse> response = handler.handleDuplicate(
+                new DuplicateResourceException("Department with code CS101 already exists"), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(Objects.requireNonNull(response.getBody()).message()).contains("CS101");
     }
 
     @Test
@@ -35,10 +48,10 @@ class GlobalExceptionHandlerTest {
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRequestURI()).thenReturn("/api/test");
 
-        ResponseEntity<ApiError> response = handler.handleIllegalState(
+        ResponseEntity<ErrorResponse> response = handler.handleIllegalState(
                 new IllegalStateException("Bad state"), request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(Objects.requireNonNull(response.getBody()).getMessage()).isEqualTo("Bad state");
+        assertThat(Objects.requireNonNull(response.getBody()).message()).isEqualTo("Bad state");
     }
 }

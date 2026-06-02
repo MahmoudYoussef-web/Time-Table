@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { Plus, Search } from 'lucide-react';
+import { toast } from 'sonner';
 import { Instructor } from '../types';
 import * as instructorsApi from '../api/instructors';
 import * as departmentsApi from '../api/departments';
 import { Table } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { InstructorForm } from '../components/forms/InstructorForm';
+import { useTableFilter } from '../hooks/useTableFilter';
 
 export function InstructorsPage() {
   const [instructors, setInstructors] = useState<Instructor[]>([]);
@@ -15,6 +17,8 @@ export function InstructorsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Instructor | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -45,20 +49,48 @@ export function InstructorsPage() {
     } catch { toast.error('Failed to save instructor'); }
   };
 
-  const handleDelete = async (i: Instructor) => {
-    if (!window.confirm('Are you sure you want to delete this instructor? This cannot be undone.')) return;
+  const handleDeleteConfirm = async () => {
+    if (!deleteTargetId) return;
+    setDeleting(true);
     try {
-      await instructorsApi.deleteInstructor(i.id);
+      await instructorsApi.deleteInstructor(deleteTargetId);
       toast.success('Instructor deleted');
       fetchData();
     } catch { toast.error('Failed to delete instructor'); }
+    finally { setDeleting(false); setDeleteTargetId(null); }
   };
+
+  const { filtered, search, setSearch, filters, setFilters } = useTableFilter(
+    instructors as unknown as Record<string, unknown>[],
+    ['name', 'email', 'departmentName'],
+  );
+
+  if (loading) return <div className="h-32 bg-[--muted] rounded animate-pulse" />;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="headline-lg">Instructors</h1>
+        <h1 className="display-lg">Instructors <span className="text-sm text-[--text-secondary] font-normal">({instructors.length})</span></h1>
         <Button onClick={openCreate}><Plus size={18} /> Add Instructor</Button>
+      </div>
+      <div className="flex gap-2 mb-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[--text-muted]" />
+          <input
+            placeholder="Search by name, email or department..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 text-sm border border-[--border] rounded-[--radius-sm] bg-[--surface] outline-none focus:border-[--primary]"
+          />
+        </div>
+        <select
+          value={filters.departmentName ?? ''}
+          onChange={e => setFilters(f => ({ ...f, departmentName: e.target.value || undefined }))}
+          className="text-sm border border-[--border] rounded-[--radius-sm] px-3 py-2 bg-[--surface] outline-none"
+        >
+          <option value="">All Departments</option>
+          {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+        </select>
       </div>
       <Table
         columns={[
@@ -67,9 +99,9 @@ export function InstructorsPage() {
           { key: 'email', header: 'Email' },
           { key: 'departmentName', header: 'Department' },
         ]}
-        data={instructors}
+        data={filtered}
         onEdit={openEdit}
-        onDelete={handleDelete}
+        onDelete={(i) => setDeleteTargetId(i.id)}
         loading={loading}
       />
       <Modal isOpen={modalOpen} onClose={closeModal} title={editing ? 'Edit Instructor' : 'Add Instructor'}>
@@ -80,6 +112,14 @@ export function InstructorsPage() {
           departments={departments}
         />
       </Modal>
+      <ConfirmModal
+        isOpen={deleteTargetId !== null}
+        title="Delete Instructor"
+        message="Are you sure? This action cannot be undone."
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTargetId(null)}
+        loading={deleting}
+      />
     </div>
   );
 }

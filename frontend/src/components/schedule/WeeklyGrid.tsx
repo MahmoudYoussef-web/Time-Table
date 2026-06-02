@@ -1,23 +1,16 @@
-import { useState, useMemo } from 'react';
-import { AlertTriangle, FileText, Table as TableIcon } from 'lucide-react';
+import { useState, useMemo, memo } from 'react';
+import { AlertTriangle, FileText, Table as TableIcon, Image } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ScheduleEntryDTO, DayOfWeek, YearLevel, WeeklyScheduleDTO, ConstraintViolation } from '../../types';
 import { dayLabel, cn } from '../../lib/utils';
 import { Button } from '../ui/Button';
-import { downloadPdf, downloadExcel, getConflicts } from '../../api/schedules';
+import { downloadPdf, downloadExcel, downloadPng, getConflicts } from '../../api/schedules';
+import { ScheduleCell } from './ScheduleCell';
 
 const EGYPTIAN_DAYS: DayOfWeek[] = ['SATURDAY', 'SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY'];
 
-const BORDER_COLORS: Record<string, string> = {
-  LECTURE:  'var(--info)',
-  LAB:      'var(--success)',
-  TUTORIAL: 'var(--warning)',
-  SEMINAR:  '#7C6FAF',
-  SECTION:  'var(--accent)',
-};
-
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } };
-const rowItem = { hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' } } };
+const rowItem = { hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' as const } } };
 
 interface WeeklyGridProps {
   data: WeeklyScheduleDTO;
@@ -26,11 +19,13 @@ interface WeeklyGridProps {
   showExport?: boolean;
 }
 
-export function WeeklyGrid({ data, scheduleId, showFilter = true, showExport = true }: WeeklyGridProps) {
+export const WeeklyGrid = memo(function WeeklyGrid({ data, scheduleId, showFilter = true, showExport = true }: WeeklyGridProps) {
   const [selectedYear, setSelectedYear] = useState<YearLevel | 'ALL'>('ALL');
   const [selectedDept, setSelectedDept] = useState<string>('ALL');
   const [showConflicts, setShowConflicts] = useState(false);
   const [conflicts, setConflicts] = useState<ConstraintViolation[]>([]);
+  const [exportTheme, setExportTheme] = useState<'NAVY' | 'BLACK'>('NAVY');
+  const [exportYear, setExportYear] = useState<string>('');
 
   const timeSlots = useMemo(() => {
     const slots = new Set<string>();
@@ -105,70 +100,90 @@ export function WeeklyGrid({ data, scheduleId, showFilter = true, showExport = t
             </select>
           </div>
         )}
-        {showExport && scheduleId && (
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="secondary" onClick={() => downloadPdf(scheduleId)}>
-              <FileText size={16} /> PDF
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => downloadExcel(scheduleId)}>
-              <TableIcon size={16} /> Excel
-            </Button>
-            <Button size="sm" variant="secondary" onClick={loadConflicts}>
-              <AlertTriangle size={16} /> Conflicts
-            </Button>
-          </div>
-        )}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse" style={{ minWidth: 700 }}>
-          <thead>
-            <tr>
-              <th className="w-16 mono-sm text-right pr-3 py-2 border-b border-[--border] text-[--muted-foreground]" style={{ borderBottomWidth: '0.5px' }} />
-              {EGYPTIAN_DAYS.map((day) => (
-                <th key={day} className="overline text-center py-2 border-b border-[--border] min-w-[100px]" style={{ borderBottomWidth: '0.5px' }}>
-                  {dayLabel(day)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <motion.tbody variants={container} initial="hidden" animate="show">
-            {timeSlots.map((time) => (
-              <motion.tr key={time} variants={rowItem}>
-                <td className="w-16 mono-sm text-right pr-3 py-2 text-[--muted-foreground] border-b border-[--border] align-top" style={{ borderBottomWidth: '0.5px' }}>
-                  {time}
-                </td>
-                {EGYPTIAN_DAYS.map((day) => {
-                  const entry = getEntry(day, time);
-                  if (!entry) {
+      {showExport && scheduleId && (
+        <div className="flex items-center gap-3 mb-3 flex-wrap">
+          <div className="flex rounded-lg overflow-hidden border border-[--border]">
+            {(['NAVY', 'BLACK'] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => setExportTheme(t)}
+                className={`px-3 py-1 text-sm ${exportTheme === t
+                  ? 'bg-[--primary] text-white'
+                  : 'bg-[--surface] text-[--text-secondary]'}`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+          <select
+            value={exportYear}
+            onChange={e => setExportYear(e.target.value)}
+            className="text-sm border border-[--border] rounded px-2 py-1 bg-[--surface]"
+          >
+            <option value="">All Years</option>
+            <option value="FIRST">First Year</option>
+            <option value="SECOND">Second Year</option>
+            <option value="THIRD">Third Year</option>
+            <option value="FOURTH">Fourth Year</option>
+          </select>
+          <Button size="sm" variant="secondary" onClick={() => downloadPdf(scheduleId, exportTheme, exportYear || undefined)}>
+            <FileText size={16} /> PDF
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => downloadExcel(scheduleId, exportTheme)}>
+            <TableIcon size={16} /> Excel
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => downloadPng(scheduleId, exportTheme, exportYear || undefined)}>
+            <Image size={16} /> PNG
+          </Button>
+          <Button size="sm" variant="secondary" onClick={loadConflicts}>
+            <AlertTriangle size={16} /> Conflicts
+          </Button>
+        </div>
+      )}
+
+      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="min-w-[680px]">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className="w-16 mono-sm text-right pr-3 py-2 border-b border-[--border] text-[--muted-foreground] whitespace-nowrap" style={{ borderBottomWidth: '0.5px' }} />
+                {EGYPTIAN_DAYS.map((day) => (
+                  <th key={day} className="overline text-center py-2 border-b border-[--border] min-w-[100px] whitespace-nowrap" style={{ borderBottomWidth: '0.5px' }}>
+                    {dayLabel(day)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <motion.tbody variants={container} initial="hidden" animate="show">
+              {timeSlots.map((time) => (
+                <motion.tr key={time} variants={rowItem}>
+                  <td className="w-16 mono-sm text-right pr-3 py-2 text-[--muted-foreground] border-b border-[--border] align-top whitespace-nowrap" style={{ borderBottomWidth: '0.5px' }}>
+                    {time}
+                  </td>
+                  {EGYPTIAN_DAYS.map((day) => {
+                    const entry = getEntry(day, time);
+                    if (!entry) {
+                      return (
+                        <td key={day} className="border-b border-[--border] p-1 align-top h-[70px] group" style={{ borderBottomWidth: '0.5px' }}>
+                          <div className="h-full w-full rounded-[--radius-sm] border border-dashed border-transparent group-hover:border-[--border]/40 transition-colors">
+                            <div className="empty-cell text-center text-[--muted-foreground] text-sm py-3">&mdash;</div>
+                          </div>
+                        </td>
+                      );
+                    }
                     return (
-                      <td key={day} className="border-b border-[--border] p-1 align-top h-[70px] group" style={{ borderBottomWidth: '0.5px' }}>
-                        <div className="h-full w-full rounded-[--radius-sm] border border-dashed border-transparent group-hover:border-[--border]/40 transition-colors" />
+                      <td key={day} className="border-b border-[--border] p-1 align-top h-[70px]" style={{ borderBottomWidth: '0.5px' }}>
+                        <ScheduleCell entry={entry} />
                       </td>
                     );
-                  }
-                  const borderColor = BORDER_COLORS[entry.sessionType] || 'var(--accent)';
-                  const hasHardViolation = entry.hardViolations > 0;
-                  return (
-                    <td key={day} className="border-b border-[--border] p-1 align-top h-[70px]" style={{ borderBottomWidth: '0.5px' }}>
-                      <div
-                        className="h-full rounded-[--radius-sm] bg-[--card] px-2 py-1.5 flex flex-col justify-center"
-                        style={{
-                          borderLeft: `2px solid ${borderColor}`,
-                          ...(hasHardViolation ? { border: '2px solid var(--destructive)' } : {}),
-                        }}
-                      >
-                        <span className="label-sm font-semibold">{entry.courseCode}</span>
-                        <span className="label-sm text-[--muted-foreground]">{entry.roomNumber}</span>
-                        <span className="label-sm text-[--muted-foreground] truncate">{entry.instructorName}</span>
-                      </div>
-                    </td>
-                  );
-                })}
-              </motion.tr>
-            ))}
-          </motion.tbody>
-        </table>
+                  })}
+                </motion.tr>
+              ))}
+            </motion.tbody>
+          </table>
+        </div>
       </div>
 
       {showConflicts && (
@@ -199,4 +214,4 @@ export function WeeklyGrid({ data, scheduleId, showFilter = true, showExport = t
       )}
     </div>
   );
-}
+});

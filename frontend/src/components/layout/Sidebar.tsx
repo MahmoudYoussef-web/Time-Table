@@ -1,46 +1,37 @@
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, BookOpen, Users, DoorOpen, GraduationCap,
-  Zap, Clock, Building2, Layers, LogOut, Calendar,
+  LayoutDashboard, BookOpen, Users, DoorOpen,
+  Zap, Clock, Building2, Layers, LogOut, GraduationCap, List, Calendar,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
+import { useScheduleStore } from '../../store/scheduleStore';
 
-type NavGroup = {
-  label: string;
-  items: { icon: React.ElementType; label: string; to: string }[];
-}[];
+type NavItem = { icon: React.ElementType; label: string; to: string; roles: string[] };
 
-const navGroups: NavGroup = [
-  {
-    label: 'OVERVIEW',
-    items: [
-      { icon: LayoutDashboard, label: 'Dashboard', to: '/dashboard' },
-    ],
-  },
-  {
-    label: 'ACADEMIC DATA',
-    items: [
-      { icon: BookOpen,     label: 'Courses',     to: '/courses' },
-      { icon: Building2,    label: 'Departments',  to: '/departments' },
-      { icon: Users,        label: 'Instructors',  to: '/lecturers' },
-      { icon: DoorOpen,     label: 'Rooms',        to: '/rooms' },
-      { icon: Layers,       label: 'Sections',     to: '/sections' },
-      { icon: Clock,        label: 'Semesters',    to: '/semesters' },
-      { icon: Clock,        label: 'Time Slots',   to: '/timeslots' },
-    ],
-  },
-  {
-    label: 'SCHEDULING',
-    items: [
-      { icon: Zap,          label: 'Generate',     to: '/generate' },
-      { icon: Calendar,     label: 'Weekly View',  to: '/schedules' },
-    ],
-  },
+const navItems: NavItem[] = [
+  { icon: LayoutDashboard, label: 'Dashboard', to: '/dashboard', roles: ['ADMIN', 'SCHEDULER', 'INSTRUCTOR'] },
+  { icon: BookOpen,     label: 'Courses',     to: '/courses',     roles: ['ADMIN', 'SCHEDULER'] },
+  { icon: Building2,    label: 'Departments',  to: '/departments', roles: ['ADMIN', 'SCHEDULER'] },
+  { icon: Users,        label: 'Instructors',  to: '/lecturers',  roles: ['ADMIN', 'SCHEDULER'] },
+  { icon: DoorOpen,     label: 'Rooms',        to: '/rooms',      roles: ['ADMIN', 'SCHEDULER'] },
+  { icon: Layers,       label: 'Sections',     to: '/sections',   roles: ['ADMIN', 'SCHEDULER'] },
+  { icon: Clock,        label: 'Semesters',    to: '/semesters',  roles: ['ADMIN', 'SCHEDULER'] },
+  { icon: Clock,        label: 'Time Slots',   to: '/timeslots',  roles: ['ADMIN', 'SCHEDULER'] },
+  { icon: Users,        label: 'Students',     to: '/students',   roles: ['ADMIN', 'SCHEDULER'] },
+  { icon: GraduationCap,label: 'Enrollments',  to: '/enrollments',roles: ['ADMIN', 'SCHEDULER'] },
+  { icon: Zap,          label: 'Generate',     to: '/generate',   roles: ['ADMIN', 'SCHEDULER'] },
+  { icon: List,         label: 'Schedule History', to: '/schedules', roles: ['ADMIN', 'SCHEDULER'] },
+  { icon: Calendar,     label: 'Weekly View',  to: '',            roles: ['ADMIN', 'SCHEDULER'], dynamic: true },
+  { icon: Calendar,     label: 'My Schedule',  to: '/instructor/schedule', roles: ['ADMIN', 'INSTRUCTOR'] },
 ];
 
 export function Sidebar() {
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
+  const role = useAuthStore((s) => s.role);
+  const { lastScheduleId } = useScheduleStore();
+
+  const visibleItems = navItems.filter(item => role && item.roles.includes(role));
 
   return (
     <aside className="w-[220px] h-full bg-[--sidebar] border-r border-[--sidebar-border] flex flex-col flex-shrink-0" style={{ borderRightWidth: '0.5px' }}>
@@ -61,14 +52,17 @@ export function Sidebar() {
         </div>
 
         <nav className="flex flex-col gap-5 px-2">
-          {navGroups.map((group) => (
-            <div key={group.label}>
-              <span className="overline px-5 block mb-1.5">{group.label}</span>
-              <div className="flex flex-col gap-0.5">
-                {group.items.map(({ icon: Icon, label, to }) => (
+          <div>
+            <span className="overline px-5 block mb-1.5">NAVIGATION</span>
+            <div className="flex flex-col gap-0.5">
+              {visibleItems.map(({ icon: Icon, label, to, dynamic }) => {
+                const linkTo = dynamic
+                  ? (lastScheduleId ? `/schedules/${lastScheduleId}/weekly` : '/generate')
+                  : to;
+                return (
                   <NavLink
-                    key={to}
-                    to={to}
+                    key={label}
+                    to={linkTo}
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-5 py-2.5 rounded-[--radius-sm] text-sm transition-colors duration-150 ${
                         isActive
@@ -80,10 +74,10 @@ export function Sidebar() {
                     <Icon size={18} />
                     {label}
                   </NavLink>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          ))}
+          </div>
         </nav>
       </div>
 

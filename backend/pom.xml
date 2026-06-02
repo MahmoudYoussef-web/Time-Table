@@ -107,6 +107,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Flying Saucer (HTML to PNG) -->
+        <dependency>
+            <groupId>org.xhtmlrenderer</groupId>
+            <artifactId>flying-saucer-core</artifactId>
+            <version>9.1.22</version>
+        </dependency>
+
     </dependencies>
 
     <build>

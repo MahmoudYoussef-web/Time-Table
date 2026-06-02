@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { Plus, BookOpen, Search } from 'lucide-react';
+import { toast } from 'sonner';
 import { Course, CourseRequest } from '../types';
 import { getCourses, createCourse, updateCourse, deleteCourse } from '../api/courses';
 import * as departmentsApi from '../api/departments';
 import { Table } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
+import { EmptyState } from '../components/ui/EmptyState';
+import { ErrorState } from '../components/ui/ErrorState';
 import { CourseForm } from '../components/forms/CourseForm';
+import { useTableFilter } from '../hooks/useTableFilter';
 
 export function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -15,6 +19,8 @@ export function CoursesPage() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -50,35 +56,80 @@ export function CoursesPage() {
     }
   };
 
-  const handleDelete = async (c: Course) => {
-    if (!window.confirm('Delete this course? This cannot be undone.')) return;
+  const handleDeleteConfirm = async () => {
+    if (!deleteTargetId) return;
+    setDeleting(true);
     try {
-      await deleteCourse(c.id);
+      await deleteCourse(deleteTargetId);
       toast.success('Course deleted');
       fetchData();
     } catch {
       toast.error('Failed to delete course');
+    } finally {
+      setDeleting(false);
+      setDeleteTargetId(null);
     }
   };
+
+  const { filtered, search, setSearch, filters, setFilters } = useTableFilter(
+    courses as unknown as Record<string, unknown>[],
+    ['name', 'code'],
+  );
+
+  if (loading) return <div className="h-32 bg-[--muted] rounded animate-pulse" />;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="headline-lg">Courses</h1>
+        <h1 className="display-lg">Courses <span className="text-sm text-[--text-secondary] font-normal">({courses.length})</span></h1>
         <Button onClick={openAdd}><Plus size={18} /> Add Course</Button>
       </div>
-      <Table
-        columns={[
-          { key: 'code', header: 'Code' },
-          { key: 'name', header: 'Name' },
-          { key: 'creditHours', header: 'Credits' },
-          { key: 'departmentName', header: 'Department' },
-        ]}
-        data={courses}
-        onEdit={openEdit}
-        onDelete={handleDelete}
-        loading={loading}
-      />
+      <div className="flex gap-2 mb-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[--text-muted]" />
+          <input
+            placeholder="Search by name or code..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 text-sm border border-[--border] rounded-[--radius-sm] bg-[--surface] outline-none focus:border-[--primary]"
+          />
+        </div>
+        <select
+          value={filters.departmentName ?? ''}
+          onChange={e => setFilters(f => ({ ...f, departmentName: e.target.value || undefined }))}
+          className="text-sm border border-[--border] rounded-[--radius-sm] px-3 py-2 bg-[--surface] outline-none"
+        >
+          <option value="">All Departments</option>
+          {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+        </select>
+      </div>
+      {courses.length === 0 ? (
+        <EmptyState
+          icon={<BookOpen size={48} />}
+          title="No courses yet"
+          description="Add your first course to get started"
+          action={<Button onClick={openAdd}>Add Course</Button>}
+        />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={<Search size={48} />}
+          title="No results"
+          description="Try a different search or filter"
+        />
+      ) : (
+        <Table
+          columns={[
+            { key: 'code', header: 'Code' },
+            { key: 'name', header: 'Name' },
+            { key: 'creditHours', header: 'Credits' },
+            { key: 'departmentName', header: 'Department' },
+          ]}
+          data={filtered}
+          onEdit={openEdit}
+          onDelete={(c) => setDeleteTargetId(c.id)}
+          loading={loading}
+        />
+      )}
       <Modal isOpen={modalOpen} onClose={closeModal} title={editingCourse ? 'Edit Course' : 'Add Course'}>
         <CourseForm
           defaultValues={editingCourse ? {
@@ -92,6 +143,14 @@ export function CoursesPage() {
           departments={departments}
         />
       </Modal>
+      <ConfirmModal
+        isOpen={deleteTargetId !== null}
+        title="Delete Course"
+        message="Are you sure? This action cannot be undone."
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTargetId(null)}
+        loading={deleting}
+      />
     </div>
   );
 }

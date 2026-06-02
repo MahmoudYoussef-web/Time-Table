@@ -9,6 +9,7 @@ import com.example.timetable.repository.UserRepository;
 import com.example.timetable.service.InstructorService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional
 public class InstructorServiceImpl implements InstructorService {
 

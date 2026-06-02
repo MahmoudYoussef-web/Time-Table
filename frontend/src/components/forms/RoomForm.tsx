@@ -18,11 +18,11 @@ type FormData = z.infer<typeof schema>;
 interface RoomFormProps {
   defaultValues?: Partial<FormData>;
   onSubmit: (data: RoomRequest) => Promise<void>;
-  onCancel: () => void;
+  loading?: boolean;
 }
 
-export function RoomForm({ defaultValues, onSubmit, onCancel }: RoomFormProps) {
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+export function RoomForm({ defaultValues, onSubmit, loading }: RoomFormProps) {
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues,
   });
@@ -39,8 +39,7 @@ export function RoomForm({ defaultValues, onSubmit, onCancel }: RoomFormProps) {
         <option value="SEMINAR_ROOM">Seminar Room</option>
       </Select>
       <div className="flex gap-2 mt-4">
-        <Button type="submit" loading={isSubmitting}>Save</Button>
-        <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
+        <Button type="submit" loading={loading}>Save</Button>
       </div>
     </form>
   );

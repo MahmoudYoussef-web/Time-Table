@@ -38,7 +38,7 @@ export function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-[--background]">
       <div className="max-w-sm w-full bg-[--card] border border-[--border] rounded-[--radius-md] p-[38px]">
-        <h1 className="headline-display text-center mb-[38px]">Timetable Scheduler</h1>
+        <h1 className="display-xl text-center mb-[38px]">Timetable Scheduler</h1>
         <form onSubmit={handleSubmit(onSubmit)}>
           <Input label="Email" {...register('email')} error={errors.email?.message} />
           <Input label="Password" type="password" {...register('password')} error={errors.password?.message} />
@@ -49,3 +49,4 @@ export function LoginPage() {
     </div>
   );
 }
+

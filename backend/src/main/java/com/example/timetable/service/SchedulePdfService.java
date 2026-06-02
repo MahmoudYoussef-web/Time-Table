@@ -22,6 +22,7 @@ public class SchedulePdfService {
 
     private static final Color NAVY        = new Color(26, 53, 96);
     private static final Color WHITE       = Color.WHITE;
+    private static final Color BLACK       = Color.BLACK;
     private static final Color LECTURE_BG  = new Color(219, 234, 254);
     private static final Color LECTURE_FG  = new Color(29, 78, 216);
     private static final Color LECTURE_BORDER = new Color(37, 99, 235);
@@ -44,6 +45,18 @@ public class SchedulePdfService {
     );
 
     public byte[] generatePdf(ScheduleDTO schedule) {
+        return generatePdf(schedule, PdfColorScheme.COLOR, null);
+    }
+
+    public byte[] exportPdf(ScheduleDTO schedule, ColorTheme theme) {
+        return generatePdf(schedule, toScheme(theme), null);
+    }
+
+    public byte[] exportPdf(ScheduleDTO schedule, String year, ColorTheme theme) {
+        return generatePdf(schedule, toScheme(theme), year);
+    }
+
+    private byte[] generatePdf(ScheduleDTO schedule, PdfColorScheme scheme, String yearFilter) {
         try {
             Map<String, WeeklyScheduleDTO> levelTables =
                     WeeklyScheduleMapper.toLevelTables(schedule);
@@ -55,16 +68,18 @@ public class SchedulePdfService {
 
             document.open();
 
-            addSummaryPage(document, schedule);
+            addSummaryPage(document, schedule, scheme);
 
-            List<String> levels = List.of("First Year", "Second Year", "Third Year", "Fourth Year");
+            List<String> levels = yearFilter != null
+                    ? List.of(yearFilter)
+                    : List.of("First Year", "Second Year", "Third Year", "Fourth Year");
             for (String level : levels) {
                 WeeklyScheduleDTO weekly = levelTables.get(level);
                 if (weekly == null) continue;
 
                 document.newPage();
-                addPageHeader(document, level, schedule);
-                PdfPTable table = buildScheduleTable(weekly);
+                addPageHeader(document, level, schedule, scheme);
+                PdfPTable table = buildScheduleTable(weekly, scheme);
                 document.add(table);
             }
 
@@ -76,14 +91,22 @@ public class SchedulePdfService {
         }
     }
 
-    private void addSummaryPage(Document doc, ScheduleDTO schedule) throws DocumentException {
-        Font titleFont   = new Font(Font.HELVETICA, 26, Font.BOLD, NAVY);
-        Font deptFont    = new Font(Font.HELVETICA, 12, Font.NORMAL, GRAY_TEXT);
+    private static PdfColorScheme toScheme(ColorTheme theme) {
+        return switch (theme) {
+            case BLACK -> PdfColorScheme.BW;
+            default -> PdfColorScheme.COLOR;
+        };
+    }
+
+    private void addSummaryPage(Document doc, ScheduleDTO schedule, PdfColorScheme scheme) throws DocumentException {
+        Color primary = scheme.headerBg();
+        Font titleFont   = new Font(Font.HELVETICA, 26, Font.BOLD, primary);
+        Font deptFont    = new Font(Font.HELVETICA, 12, Font.NORMAL, scheme.grayText());
         Font sectionFont = new Font(Font.HELVETICA, 14, Font.BOLD, new Color(192, 57, 43));
         Font dataFont    = new Font(Font.HELVETICA, 11, Font.NORMAL, new Color(55, 65, 81));
-        Font labelFont   = new Font(Font.HELVETICA, 11, Font.BOLD, NAVY);
-        Font statValFont  = new Font(Font.HELVETICA, 18, Font.BOLD, NAVY);
-        Font statLabelFont = new Font(Font.HELVETICA, 9, Font.NORMAL, GRAY_TEXT);
+        Font labelFont   = new Font(Font.HELVETICA, 11, Font.BOLD, primary);
+        Font statValFont  = new Font(Font.HELVETICA, 18, Font.BOLD, primary);
+        Font statLabelFont = new Font(Font.HELVETICA, 9, Font.NORMAL, scheme.grayText());
 
         Paragraph title = new Paragraph("DEPARTMENT WEEKLY SCHEDULE", titleFont);
         title.setAlignment(Element.ALIGN_CENTER);
@@ -91,7 +114,7 @@ public class SchedulePdfService {
         doc.add(title);
 
         Paragraph accentLine = new Paragraph("____________________________________________________",
-                new Font(Font.HELVETICA, 8, Font.NORMAL, ACCENT_LINE));
+                new Font(Font.HELVETICA, 8, Font.NORMAL, primary));
         accentLine.setAlignment(Element.ALIGN_CENTER);
         accentLine.setSpacingAfter(16);
         doc.add(accentLine);
@@ -159,7 +182,7 @@ public class SchedulePdfService {
         infoTable.setHorizontalAlignment(Element.ALIGN_CENTER);
         infoTable.setSpacingBefore(4);
 
-        PdfPCell infoHeaderCell = new PdfPCell(new Phrase("Schedule Overview", new Font(Font.HELVETICA, 12, Font.BOLD, NAVY)));
+        PdfPCell infoHeaderCell = new PdfPCell(new Phrase("Schedule Overview", new Font(Font.HELVETICA, 12, Font.BOLD, primary)));
         infoHeaderCell.setColspan(2);
         infoHeaderCell.setBorder(PdfPCell.NO_BORDER);
         infoHeaderCell.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -219,10 +242,10 @@ public class SchedulePdfService {
         table.addCell(valueCell);
     }
 
-    private void addPageHeader(Document doc, String level, ScheduleDTO schedule) throws DocumentException {
-        Font mainTitleFont = new Font(Font.HELVETICA, 20, Font.BOLD, NAVY);
+    private void addPageHeader(Document doc, String level, ScheduleDTO schedule, PdfColorScheme scheme) throws DocumentException {
+        Font mainTitleFont = new Font(Font.HELVETICA, 20, Font.BOLD, scheme.headerBg());
         Font levelFont     = new Font(Font.HELVETICA, 13, Font.BOLD, new Color(192, 57, 43));
-        Font dateFont      = new Font(Font.HELVETICA, 10, Font.NORMAL, GRAY_TEXT);
+        Font dateFont      = new Font(Font.HELVETICA, 10, Font.NORMAL, scheme.grayText());
 
         Paragraph mainTitle = new Paragraph("UNIVERSITY STUDY SCHEDULE", mainTitleFont);
         mainTitle.setAlignment(Element.ALIGN_CENTER);
@@ -230,7 +253,7 @@ public class SchedulePdfService {
         doc.add(mainTitle);
 
         Paragraph accentLine = new Paragraph("____________________________________________________",
-                new Font(Font.HELVETICA, 8, Font.NORMAL, ACCENT_LINE));
+                new Font(Font.HELVETICA, 8, Font.NORMAL, scheme.headerBg()));
         accentLine.setAlignment(Element.ALIGN_CENTER);
         accentLine.setSpacingAfter(6);
         doc.add(accentLine);
@@ -251,14 +274,14 @@ public class SchedulePdfService {
         doc.add(weekLine);
     }
 
-    private PdfPTable buildScheduleTable(WeeklyScheduleDTO weekly) throws DocumentException {
+    private PdfPTable buildScheduleTable(WeeklyScheduleDTO weekly, PdfColorScheme scheme) throws DocumentException {
         PdfPTable table = new PdfPTable(7);
         table.setWidthPercentage(100);
         table.setWidths(new float[]{2.0f, 3.2f, 3.2f, 3.2f, 3.2f, 3.2f, 3.2f});
 
-        addHeaderCell(table, "Time");
+        addHeaderCell(table, "Time", scheme);
         for (String day : ORDERED_DAYS) {
-            addHeaderCell(table, day);
+            addHeaderCell(table, day, scheme);
         }
 
         Set<String> allTimeKeys = weekly.days().stream()
@@ -284,12 +307,12 @@ public class SchedulePdfService {
             String timeKey = orderedTimes.get(i);
 
             if (!breakAdded && hasAfternoonSlots && timeKey.compareTo("12:00") >= 0) {
-                addBreakRow(table);
+                addBreakRow(table, scheme);
                 breakAdded = true;
             }
 
             String displayTime = formatTimeAmPm(timeKey);
-            PdfPCell timeCell = buildTimeCell(displayTime, i);
+            PdfPCell timeCell = buildTimeCell(displayTime, i, scheme);
             table.addCell(timeCell);
 
             for (String day : ORDERED_DAYS) {
@@ -301,10 +324,10 @@ public class SchedulePdfService {
         return table;
     }
 
-    private void addHeaderCell(PdfPTable table, String text) {
-        Font f = new Font(Font.HELVETICA, 11, Font.BOLD, WHITE);
+    private void addHeaderCell(PdfPTable table, String text, PdfColorScheme scheme) {
+        Font f = new Font(Font.HELVETICA, 11, Font.BOLD, scheme.headerFg());
         PdfPCell cell = new PdfPCell(new Phrase(text, f));
-        cell.setBackgroundColor(NAVY);
+        cell.setBackgroundColor(scheme.headerBg());
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         cell.setPadding(8);
@@ -314,10 +337,10 @@ public class SchedulePdfService {
         table.addCell(cell);
     }
 
-    private PdfPCell buildTimeCell(String text, int rowIndex) {
-        Font f = new Font(Font.HELVETICA, 9, Font.BOLD, WHITE);
+    private PdfPCell buildTimeCell(String text, int rowIndex, PdfColorScheme scheme) {
+        Font f = new Font(Font.HELVETICA, 9, Font.BOLD, scheme.headerFg());
         PdfPCell cell = new PdfPCell(new Phrase(text, f));
-        cell.setBackgroundColor(NAVY);
+        cell.setBackgroundColor(scheme.headerBg());
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         cell.setPadding(6);
@@ -386,11 +409,11 @@ public class SchedulePdfService {
         return cell;
     }
 
-    private void addBreakRow(PdfPTable table) {
+    private void addBreakRow(PdfPTable table, PdfColorScheme scheme) {
         Font f = new Font(Font.HELVETICA, 9, Font.BOLD, BREAK_FG);
 
         PdfPCell timeCell = new PdfPCell(new Phrase("BREAK", f));
-        timeCell.setBackgroundColor(NAVY);
+        timeCell.setBackgroundColor(scheme.headerBg());
         timeCell.setHorizontalAlignment(Element.ALIGN_CENTER);
         timeCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         timeCell.setPadding(4);

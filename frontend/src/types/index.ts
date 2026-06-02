@@ -194,6 +194,40 @@ export interface EnrollmentRequest {
   status: string;
 }
 
+export interface RoomUtilizationDTO {
+  roomLabel: string;
+  capacity: number;
+  entriesCount: number;
+  utilizationPercent: number;
+}
+
+export interface InstructorWorkloadDTO {
+  instructorName: string;
+  sectionCount: number;
+  estimatedHours: number;
+}
+
+export interface AnalyticsResponse {
+  totalSchedules: number;
+  totalInstructors: number;
+  totalRooms: number;
+  totalCourses: number;
+  averageFitnessScore: number;
+  totalHardViolations: number;
+  roomUtilization: RoomUtilizationDTO[];
+  instructorWorkload: InstructorWorkloadDTO[];
+}
+
+export interface ScheduleSummary {
+  id: number;
+  semesterName: string;
+  status: string;
+  fitnessScore: number;
+  hardViolations: number;
+  softViolations: number;
+  createdAt: string;
+}
+
 export interface ScheduleDTO {
   id: number;
   fitnessScore: number;

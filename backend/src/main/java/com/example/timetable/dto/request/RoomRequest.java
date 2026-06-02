@@ -17,6 +17,7 @@ public record RoomRequest(
         @Min(value = 1, message = "Capacity must be at least 1")
         Integer capacity,
 
+        @NotNull(message = "Room type is required")
         RoomType roomType
 ) {
 }

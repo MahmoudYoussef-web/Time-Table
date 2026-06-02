@@ -116,6 +116,8 @@ public class SchedulePngService {
                 + " line-height: 1.3; padding: 6px; }"
                 + ".time-sub { font-size: 9px; font-weight: 400; color: " + grayHex + "; display: block; }"
                 + ".entry { text-align: center; line-height: 1.3; padding: 2px; }"
+                + ".entry-conflict { border-left: 4px solid #CC0000; background-color: #FFF0F0; }"
+                + ".entry-conflict .entry-code { color: #CC0000; }"
                 + ".entry-code { font-size: " + ScheduleRenderModel.COURSE_CODE_SIZE + "px; font-weight: 700;"
                 + " color: " + primaryHex + "; display: block; margin-bottom: 6px; }"
                 + ".entry-name { font-size: " + ScheduleRenderModel.COURSE_NAME_SIZE + "px; font-weight: 600;"
@@ -134,6 +136,7 @@ public class SchedulePngService {
                 + ".break-cell { text-align: center; vertical-align: middle;"
                 + " font-size: 12px; font-weight: 700; color: " + primaryHex + "; }"
                 + ".alt-row td { background: " + altBgHex + "; }"
+                + ".date-label { font-weight: 700; color: " + primaryHex + "; margin-right: 6px; }"
                 + ".footer { text-align: center; margin-top: 12px; }"
                 + ".footer-text { font-size: " + ScheduleRenderModel.FOOTER_SIZE + "px; color: " + grayHex + "; }";
     }
@@ -142,7 +145,10 @@ public class SchedulePngService {
         return "<div class=\"wrapper header\">"
                 + "<div class=\"title\">" + esc(model.getTitle()) + "</div>"
                 + "<div class=\"subtitle\">" + esc(model.getSubtitle()) + "</div>"
-                + "<div class=\"date-line\">" + esc(model.getDateRange()) + "</div>"
+                + "<div class=\"date-line\">"
+                + "<span class=\"date-label\">Period:</span> "
+                + esc(model.getDateRange())
+                + "</div>"
                 + "</div>"
                 + "<div class=\"wrapper\"><hr class=\"divider\"/></div>";
     }
@@ -181,7 +187,8 @@ public class SchedulePngService {
                 if (cc.isEmpty()) {
                     sb.append("<td class=\"empty-cell\">\u2014</td>");
                 } else {
-                    sb.append("<td><div class=\"entry\">")
+                    String entryClass = cc.hasConflict() ? "entry entry-conflict" : "entry";
+                    sb.append("<td><div class=\"").append(entryClass).append("\">")
                             .append("<span class=\"entry-code\">").append(esc(cc.getCourseCode())).append("</span>")
                             .append("<span class=\"entry-name\">").append(esc(cc.getCourseName())).append("</span>")
                             .append("<span class=\"entry-instructor\">").append(esc(cc.getInstructor())).append("</span>")

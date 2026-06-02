@@ -1,92 +1,165 @@
-import { Search } from 'lucide-react';
-import { useState } from 'react';
-
-interface Student {
-  id: string;
-  name: string;
-  department: string;
-  semester: number;
-  status: 'Active' | 'Inactive' | 'Graduated';
-}
-
-const mockStudents: Student[] = [
-  { id: 'STU-2024-001', name: 'Emma Thompson', department: 'Computer Science', semester: 4, status: 'Active' },
-  { id: 'STU-2024-002', name: 'James Rodriguez', department: 'Mathematics', semester: 2, status: 'Active' },
-  { id: 'STU-2024-003', name: 'Sophia Chen', department: 'Physics', semester: 6, status: 'Active' },
-  { id: 'STU-2024-004', name: 'Liam O\'Brien', department: 'Computer Science', semester: 4, status: 'Active' },
-  { id: 'STU-2024-005', name: 'Olivia Patel', department: 'Chemistry', semester: 2, status: 'Active' },
-  { id: 'STU-2024-006', name: 'Noah Kim', department: 'Biology', semester: 8, status: 'Graduated' },
-  { id: 'STU-2024-007', name: 'Ava Martinez', department: 'Computer Science', semester: 6, status: 'Active' },
-  { id: 'STU-2024-008', name: 'Ethan Johnson', department: 'Mathematics', semester: 4, status: 'Inactive' },
-  { id: 'STU-2024-009', name: 'Isabella Lee', department: 'Physics', semester: 2, status: 'Active' },
-  { id: 'STU-2024-010', name: 'Mason Brown', department: 'Chemistry', semester: 6, status: 'Active' },
-];
-
-const statusStyles: Record<string, string> = {
-  Active: 'bg-[--muted] text-[--foreground]',
-  Inactive: 'bg-[--muted] text-[--muted-foreground]',
-  Graduated: 'bg-[--muted] text-[--foreground]',
-};
+import { useEffect, useState } from 'react';
+import { Plus, GraduationCap, Search } from 'lucide-react';
+import { toast } from 'sonner';
+import { Student } from '../types';
+import * as studentsApi from '../api/students';
+import * as departmentsApi from '../api/departments';
+import { Table } from '../components/ui/Table';
+import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
+import { EmptyState } from '../components/ui/EmptyState';
+import { StudentForm } from '../components/forms/StudentForm';
+import { useTableFilter } from '../hooks/useTableFilter';
 
 export function StudentsPage() {
-  const [search, setSearch] = useState('');
+  const [students, setStudents] = useState<Student[]>([]);
+  const [departments, setDepartments] = useState<{ id: number; name: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Student | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  const filtered = mockStudents.filter(
-    (s) =>
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.id.toLowerCase().includes(search.toLowerCase()) ||
-      s.department.toLowerCase().includes(search.toLowerCase())
+  const fetchData = async () => {
+    try {
+      const [s, d] = await Promise.all([studentsApi.getStudents(), departmentsApi.getDepartments()]);
+      setStudents(s);
+      setDepartments(d.map(d => ({ id: d.id, name: d.name })));
+    } catch {
+      toast.error('Failed to load students');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  const openCreate = () => { setEditing(null); setModalOpen(true); };
+  const openEdit = (s: Student) => { setEditing(s); setModalOpen(true); };
+  const closeModal = () => { setModalOpen(false); setEditing(null); };
+
+  const handleSubmit = async (data: Parameters<typeof studentsApi.createStudent>[0]) => {
+    try {
+      if (editing) {
+        await studentsApi.updateStudent(editing.id, data);
+        toast.success('Student updated');
+      } else {
+        await studentsApi.createStudent(data);
+        toast.success('Student created');
+      }
+      closeModal();
+      fetchData();
+    } catch {
+      toast.error('Failed to save student');
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTargetId) return;
+    setDeleting(true);
+    try {
+      await studentsApi.deleteStudent(deleteTargetId);
+      toast.success('Student deleted');
+      fetchData();
+    } catch {
+      toast.error('Failed to delete student');
+    } finally {
+      setDeleting(false);
+      setDeleteTargetId(null);
+    }
+  };
+
+  const { filtered, search, setSearch, filters, setFilters } = useTableFilter(
+    students as unknown as Record<string, unknown>[],
+    ['fullName', 'email', 'departmentName'],
   );
+
+  if (loading) return <div className="h-32 bg-[--muted] rounded animate-pulse" />;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="headline-md">Students</h1>
-        <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[--muted-foreground]" />
+        <h1 className="display-lg">Students <span className="text-sm text-[--text-secondary] font-normal">({students.length})</span></h1>
+        <Button onClick={openCreate}><Plus size={18} /> Add Student</Button>
+      </div>
+      <div className="flex gap-2 mb-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[--text-muted]" />
           <input
+            placeholder="Search by name, email or department..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search..."
-            className="border border-[--border] rounded-[--radius-sm] bg-[--background] pl-9 pr-3 h-9 body-md focus:outline-none focus:ring-1 focus:ring-[--primary] w-60"
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 text-sm border border-[--border] rounded-[--radius-sm] bg-[--surface] outline-none focus:border-[--primary]"
           />
         </div>
+        <select
+          value={filters.departmentName ?? ''}
+          onChange={e => setFilters(f => ({ ...f, departmentName: e.target.value || undefined }))}
+          className="text-sm border border-[--border] rounded-[--radius-sm] px-3 py-2 bg-[--surface] outline-none"
+        >
+          <option value="">All Departments</option>
+          {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+        </select>
+        <select
+          value={filters.academicYear ?? ''}
+          onChange={e => setFilters(f => ({ ...f, academicYear: e.target.value || undefined }))}
+          className="text-sm border border-[--border] rounded-[--radius-sm] px-3 py-2 bg-[--surface] outline-none"
+        >
+          <option value="">All Years</option>
+          {[1,2,3,4,5].map(y => <option key={y} value={y}>Year {y}</option>)}
+        </select>
       </div>
-
-      <div className="bg-[--card] border border-[--border] rounded-[--radius-md] overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-[--muted] label-sm text-[--muted-foreground]">
-              <th className="text-left py-3 px-4 font-medium">Student ID</th>
-              <th className="text-left py-3 px-4 font-medium">Name</th>
-              <th className="text-left py-3 px-4 font-medium">Department</th>
-              <th className="text-left py-3 px-4 font-medium">Semester</th>
-              <th className="text-left py-3 px-4 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="py-8 text-center text-sm text-[--muted-foreground]">No students found</td>
-              </tr>
-            ) : (
-              filtered.map((s) => (
-                <tr key={s.id} className="border-t border-[--border] body-md hover:bg-[--muted]/30 transition-colors">
-                  <td className="py-3 px-4 font-mono text-sm">{s.id}</td>
-                  <td className="py-3 px-4">{s.name}</td>
-                  <td className="py-3 px-4 text-[--muted-foreground]">{s.department}</td>
-                  <td className="py-3 px-4">Semester {s.semester}</td>
-                  <td className="py-3 px-4">
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusStyles[s.status]}`}>
-                      {s.status}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      {students.length === 0 ? (
+        <EmptyState
+          icon={<GraduationCap size={48} />}
+          title="No students yet"
+          description="Add your first student to get started"
+          action={<Button onClick={openCreate}>Add Student</Button>}
+        />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={<Search size={48} />}
+          title="No results"
+          description="Try a different search or filter"
+        />
+      ) : (
+        <Table
+          columns={[
+            { key: 'id', header: 'ID' },
+            { key: 'fullName', header: 'Name' },
+            { key: 'email', header: 'Email' },
+            { key: 'academicYear', header: 'Academic Year' },
+            { key: 'level', header: 'Level' },
+            { key: 'departmentName', header: 'Department' },
+          ]}
+          data={filtered}
+          onEdit={openEdit}
+          onDelete={(s) => setDeleteTargetId(s.id)}
+          loading={loading}
+        />
+      )}
+      <Modal isOpen={modalOpen} onClose={closeModal} title={editing ? 'Edit Student' : 'Add Student'}>
+        <StudentForm
+          defaultValues={editing ? {
+            userId: 0,
+            academicYear: editing.academicYear,
+            level: editing.level,
+            departmentId: departments.find(d => d.name === editing.departmentName)?.id || 0,
+          } : undefined}
+          onSubmit={handleSubmit}
+          onCancel={closeModal}
+          departments={departments}
+        />
+      </Modal>
+      <ConfirmModal
+        isOpen={deleteTargetId !== null}
+        title="Delete Student"
+        message="Are you sure? This action cannot be undone."
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTargetId(null)}
+        loading={deleting}
+      />
     </div>
   );
 }

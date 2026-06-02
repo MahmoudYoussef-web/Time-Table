@@ -21,7 +21,7 @@ public class AsyncScheduleJobService {
 
     private static final Logger log = LoggerFactory.getLogger(AsyncScheduleJobService.class);
 
-    @Async
+    @Async("scheduleTaskExecutor")
     public void generate(UUID jobId, Long semesterId) {
         try {
             Schedule schedule = geneticScheduleService.generate(semesterId);

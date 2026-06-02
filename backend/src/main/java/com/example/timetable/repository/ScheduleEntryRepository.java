@@ -38,4 +38,7 @@ public interface ScheduleEntryRepository
         List<ScheduleEntry> findByScheduleIdAndInstructorIdWithDetails(
                 @Param("scheduleId") Long scheduleId,
                 @Param("instructorId") Long instructorId);
+
+        @Query("SELECT COUNT(e) FROM ScheduleEntry e WHERE e.room.id = :roomId")
+        long countByRoomId(@Param("roomId") Long roomId);
 }

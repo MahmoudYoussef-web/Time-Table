@@ -11,6 +11,7 @@ import com.example.timetable.repository.ScheduleEntryRepository;
 import com.example.timetable.repository.ScheduleRepository;
 import com.example.timetable.service.ScheduleFilterService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ScheduleFilterServiceImpl implements ScheduleFilterService {
 
     private final ScheduleRepository scheduleRepository;
@@ -71,3 +73,4 @@ public class ScheduleFilterServiceImpl implements ScheduleFilterService {
         return WeeklyScheduleMapper.toWeeklyTable(ScheduleMapper.toDTO(schedule));
     }
 }
+

@@ -9,6 +9,7 @@ import com.example.timetable.service.SemesterService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -39,7 +40,7 @@ public class SemesterController {
     ) {
         Semester semester = SemesterMapper.toEntity(request);
         Semester saved = semesterService.save(semester);
-        return ResponseEntity.ok(SemesterMapper.toResponse(saved));
+        return ResponseEntity.status(HttpStatus.CREATED).body(SemesterMapper.toResponse(saved));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

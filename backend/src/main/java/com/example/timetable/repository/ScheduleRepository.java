@@ -42,4 +42,10 @@ public interface ScheduleRepository
         WHERE s.id = :id
         """)
     Optional<Schedule> findByIdWithDetails(@Param("id") Long id);
+
+    @Query("SELECT AVG(s.fitnessScore) FROM Schedule s")
+    Double findAverageFitnessScore();
+
+    @Query("SELECT COALESCE(SUM(s.hardViolations), 0) FROM Schedule s")
+    Long sumHardViolations();
 }

@@ -17,7 +17,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
       return this.props.fallback ?? (
         <div className="flex flex-col items-center justify-center h-full gap-4">
           <AlertTriangle className="w-12 h-12 text-[--destructive]" />
-          <p className="headline-md">Something went wrong</p>
+          <p className="display-md">Something went wrong</p>
           <Button onClick={() => this.setState({ hasError: false })}>Retry</Button>
         </div>
       );
@@ -25,3 +25,4 @@ export class ErrorBoundary extends React.Component<Props, State> {
     return this.props.children;
   }
 }
+

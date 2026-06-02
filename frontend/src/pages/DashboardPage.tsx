@@ -123,7 +123,7 @@ export function DashboardPage() {
           </button>
           {publishedSemester && sectionCount > 0 && (
             <button
-              onClick={() => navigate('/schedules')}
+              onClick={() => navigate('/generate')}
               className="w-full flex items-center gap-3 p-3 rounded-[--radius-sm] hover:bg-[--muted] transition-colors cursor-pointer text-left"
             >
               <ArrowRight size={14} className="text-[--muted-foreground]" />

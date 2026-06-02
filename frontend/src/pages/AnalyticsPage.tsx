@@ -1,136 +1,188 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, Building2, Users, TrendingUp } from 'lucide-react';
-
-const kpis = [
-  { icon: CheckCircle, value: '97%', label: 'Conflict-Free', accent: true },
-  { icon: Building2, value: '89%', label: 'Room Utilization' },
-  { icon: Users, value: '93%', label: 'Lecturer Satisfaction' },
-  { icon: TrendingUp, value: '94%', label: 'Efficiency' },
-];
-
-const roomData = [
-  { label: 'Hall A', value: 92 },
-  { label: 'Hall B', value: 78 },
-  { label: 'Lab 1', value: 95 },
-  { label: 'Lab 2', value: 64 },
-  { label: 'Seminar 1', value: 81 },
-  { label: 'Seminar 2', value: 70 },
-];
-
-const lecturerWorkload = [
-  { name: 'Dr. Ahmed', load: 85, courses: 4 },
-  { name: 'Prof. Lisa', load: 60, courses: 3 },
-  { name: 'Dr. Chen', load: 92, courses: 5 },
-  { name: 'Dr. Patel', load: 45, courses: 2 },
-  { name: 'Prof. Omar', load: 75, courses: 3 },
-];
-
-const timelineSteps = [
-  { week: 'Week 1', conflicts: 24, efficiency: 72 },
-  { week: 'Week 2', conflicts: 16, efficiency: 80 },
-  { week: 'Week 3', conflicts: 10, efficiency: 85 },
-  { week: 'Week 4', conflicts: 4, efficiency: 94 },
-];
+import { AlertCircle, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { getAnalytics } from '../api/analytics';
+import type { AnalyticsResponse } from '../types';
+import { TableSkeleton } from '../components/ui/TableSkeleton';
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
-
-function ConflictRing({ pct, label }: { pct: number; label: string }) {
-  const circumference = 2 * Math.PI * 32;
-  const offset = circumference - (pct / 100) * circumference;
-  return (
-    <div className="flex flex-col items-center gap-2">
-      <svg width="80" height="80" viewBox="0 0 80 80" className="rotate-[-90deg]">
-        <circle cx="40" cy="40" r="32" fill="none" stroke="var(--muted)" strokeWidth="5" />
-        <circle cx="40" cy="40" r="32" fill="none" stroke="var(--foreground)" strokeWidth="5" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" />
-      </svg>
-      <span className="text-lg font-bold">{pct}%</span>
-      <span className="label-xs text-[--muted-foreground] text-center">{label}</span>
-    </div>
-  );
-}
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#EC4899'];
 
 export function AnalyticsPage() {
-  const maxRoom = Math.max(...roomData.map((d) => d.value));
+  const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const data = await getAnalytics();
+      setAnalytics(data);
+    } catch {
+      toast.error('Failed to load analytics');
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  if (loading) {
+    return (
+      <div>
+        <h1 className="display-lg mb-6">Analytics</h1>
+        <TableSkeleton rows={3} cols={4} />
+      </div>
+    );
+  }
+
+  if (error || !analytics) {
+    return (
+      <div className="text-center py-16">
+        <AlertCircle size={48} className="mx-auto mb-4 text-[--muted-foreground]" />
+        <p className="body-lg mb-4">Failed to load analytics data</p>
+        <button onClick={fetchData} className="inline-flex items-center gap-2 px-4 h-9 bg-[--primary] text-[--primary-foreground] rounded-[--radius-sm] text-sm font-medium cursor-pointer">
+          <RefreshCw size={16} /> Retry
+        </button>
+      </div>
+    );
+  }
+
+  const roomChartData = analytics.roomUtilization.map(r => ({
+    name: r.roomLabel,
+    Utilization: Number(r.utilizationPercent.toFixed(1)),
+    Entries: r.entriesCount,
+  }));
+
+  const workloadChartData = analytics.instructorWorkload.map(w => ({
+    name: w.instructorName.split(' ').slice(0, 2).join(' '),
+    Hours: Number(w.estimatedHours.toFixed(1)),
+    Sections: w.sectionCount,
+  }));
+
+  const summaryChartData = [
+    { name: 'Schedules', value: analytics.totalSchedules },
+    { name: 'Courses', value: analytics.totalCourses },
+    { name: 'Instructors', value: analytics.totalInstructors },
+    { name: 'Rooms', value: analytics.totalRooms },
+  ].filter(d => d.value > 0);
 
   return (
     <div>
-      <h1 className="headline-lg mb-6">Analytics</h1>
+      <h1 className="display-lg mb-6">Analytics</h1>
 
       <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {kpis.map((k) => (
-          <motion.div key={k.label} variants={item} className="bg-[--card] border border-[--border] rounded-[--radius-md] p-5">
-            <div className="flex items-center justify-between mb-3">
-              <k.icon size={18} className={k.accent ? 'text-green-500' : 'text-[--muted-foreground]'} />
-              {k.accent && <span className="text-xs text-green-600 bg-green-500/10 px-2 py-0.5 rounded-full font-medium">-2.1%</span>}
-            </div>
-            <p className={`text-3xl font-bold ${k.accent ? 'text-green-600' : ''}`}>{k.value}</p>
-            <p className="text-sm text-[--muted-foreground] mt-0.5">{k.label}</p>
-          </motion.div>
-        ))}
+        <motion.div variants={item} className="bg-[--card] border border-[--border] rounded-[--radius-md] p-5">
+          <p className="text-sm text-[--muted-foreground] mb-1">Schedules</p>
+          <p className="text-3xl font-bold">{analytics.totalSchedules}</p>
+        </motion.div>
+        <motion.div variants={item} className="bg-[--card] border border-[--border] rounded-[--radius-md] p-5">
+          <p className="text-sm text-[--muted-foreground] mb-1">Instructors</p>
+          <p className="text-3xl font-bold">{analytics.totalInstructors}</p>
+        </motion.div>
+        <motion.div variants={item} className="bg-[--card] border border-[--border] rounded-[--radius-md] p-5">
+          <p className="text-sm text-[--muted-foreground] mb-1">Rooms</p>
+          <p className="text-3xl font-bold">{analytics.totalRooms}</p>
+        </motion.div>
+        <motion.div variants={item} className="bg-[--card] border border-[--border] rounded-[--radius-md] p-5">
+          <p className="text-sm text-[--muted-foreground] mb-1">Courses</p>
+          <p className="text-3xl font-bold">{analytics.totalCourses}</p>
+        </motion.div>
+        <motion.div variants={item} className="bg-[--card] border border-[--border] rounded-[--radius-md] p-5">
+          <p className="text-sm text-[--muted-foreground] mb-1">Avg Fitness Score</p>
+          <p className="text-3xl font-bold">{analytics.averageFitnessScore.toFixed(2)}</p>
+        </motion.div>
+        <motion.div variants={item} className="bg-[--card] border border-[--border] rounded-[--radius-md] p-5">
+          <p className="text-sm text-[--muted-foreground] mb-1">Hard Violations</p>
+          <p className="text-3xl font-bold text-red-500">{analytics.totalHardViolations}</p>
+        </motion.div>
       </motion.div>
 
       <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <motion.div variants={item} className="bg-[--card] border border-[--border] rounded-[--radius-md] p-5">
-          <h2 className="headline-md mb-5">Room Utilization</h2>
-          <div className="flex items-end gap-3" style={{ height: 128 }}>
-            {roomData.map((r) => (
-              <div key={r.label} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
-                <span className="text-xs font-medium">{r.value}%</span>
-                <div className="w-full rounded-[--radius-sm]" style={{ height: `${(r.value / maxRoom) * 100}%`, maxHeight: '100%', backgroundColor: 'var(--primary)', opacity: 0.7 + (r.value / maxRoom) * 0.3 }} />
-                <span className="label-xs text-[--muted-foreground] text-center">{r.label}</span>
-              </div>
-            ))}
-          </div>
+          <h2 className="display-md mb-5">Room Utilization</h2>
+          {roomChartData.length === 0 ? (
+            <p className="text-sm text-[--muted-foreground]">No room data available</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={roomChartData} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-20} textAnchor="end" height={60} />
+                <YAxis tick={{ fontSize: 11 }} unit="%" />
+                <Tooltip
+                  contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px' }}
+                  formatter={(value: number) => [`${value.toFixed(1)}%`, 'Utilization']}
+                />
+                <Bar dataKey="Utilization" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </motion.div>
 
         <motion.div variants={item} className="bg-[--card] border border-[--border] rounded-[--radius-md] p-5">
-          <h2 className="headline-md mb-5">Lecturer Workload</h2>
-          <div className="space-y-4">
-            {lecturerWorkload.map((l) => (
-              <div key={l.name}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="body-md">{l.name}</span>
-                  <span className="label-sm text-[--muted-foreground]">{l.load}% &middot; {l.courses} courses</span>
-                </div>
-                <div className="w-full h-2.5 bg-[--muted] rounded-full overflow-hidden">
-                  <div className="h-full rounded-full bg-[--foreground] transition-all" style={{ width: `${l.load}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
+          <h2 className="display-md mb-5">Instructor Workload (Hours)</h2>
+          {workloadChartData.length === 0 ? (
+            <p className="text-sm text-[--muted-foreground]">No workload data available</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={workloadChartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis type="number" tick={{ fontSize: 11 }} />
+                <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={80} />
+                <Tooltip
+                  contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px' }}
+                  formatter={(value: number) => [`${value.toFixed(1)}h`, 'Hours']}
+                />
+                <Bar dataKey="Hours" fill="#10B981" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </motion.div>
       </motion.div>
 
       <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <motion.div variants={item} className="bg-[--card] border border-[--border] rounded-[--radius-md] p-5">
-          <h2 className="headline-md mb-5">Schedule Efficiency</h2>
-          <div className="space-y-0">
-            {timelineSteps.map((s, i) => (
-              <div key={s.week} className="relative flex items-start gap-4 pb-6 last:pb-0">
-                {i < timelineSteps.length - 1 && (
-                  <div className="absolute left-[7px] top-4 bottom-0 w-px bg-[--border]" />
-                )}
-                <div className={`w-3.5 h-3.5 mt-1 rounded-full border-2 shrink-0 ${i === timelineSteps.length - 1 ? 'bg-[--foreground] border-[--foreground]' : 'bg-[--card] border-[--border]'}`} />
-                <div className="flex-1 flex items-center justify-between">
-                  <div>
-                    <p className="body-md font-medium">{s.week}</p>
-                    <p className="label-sm text-[--muted-foreground]">{s.conflicts} conflicts</p>
-                  </div>
-                  <span className="text-lg font-bold">{s.efficiency}%</span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <h2 className="display-md mb-5">Resource Distribution</h2>
+          {summaryChartData.length === 0 ? (
+            <p className="text-sm text-[--muted-foreground]">No data available</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart>
+                <Pie data={summaryChartData} cx="50%" cy="50%" outerRadius={90} innerRadius={50} dataKey="value" paddingAngle={3}>
+                  {summaryChartData.map((_, idx) => <Cell key={idx} fill={COLORS[idx % COLORS.length]} />)}
+                </Pie>
+                <Tooltip
+                  contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px' }}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
         </motion.div>
 
         <motion.div variants={item} className="bg-[--card] border border-[--border] rounded-[--radius-md] p-5">
-          <h2 className="headline-md mb-5">Conflict Reduction</h2>
-          <div className="grid grid-cols-3 gap-4">
-            <ConflictRing pct={92} label="Room Conflicts" />
-            <ConflictRing pct={88} label="Lecturer Conflicts" />
-            <ConflictRing pct={96} label="Student Conflicts" />
-          </div>
+          <h2 className="display-md mb-5">Instructor Section Count</h2>
+          {workloadChartData.length === 0 ? (
+            <p className="text-sm text-[--muted-foreground]">No workload data available</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={workloadChartData} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-20} textAnchor="end" height={60} />
+                <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px' }}
+                  formatter={(value: number) => [`${value} sections`, 'Sections']}
+                />
+                <Bar dataKey="Sections" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </motion.div>
       </motion.div>
     </div>

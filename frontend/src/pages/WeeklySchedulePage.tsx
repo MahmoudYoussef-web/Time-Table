@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CalendarOff } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { getWeeklySchedule } from '../api/weeklySchedule';
 import { WeeklyGrid } from '../components/schedule/WeeklyGrid';
 import { WeeklyScheduleDTO } from '../types';

@@ -26,14 +26,22 @@ public class ScheduleExcelService {
     private static final IndexedColors BREAK_BG   = IndexedColors.LIGHT_YELLOW;
     private static final IndexedColors HEADER_BG  = IndexedColors.DARK_BLUE;
 
+    public byte[] exportExcel(ScheduleDTO schedule, ColorTheme theme) {
+        return generateExcel(schedule, theme);
+    }
+
     public byte[] generateExcel(ScheduleDTO schedule) {
+        return generateExcel(schedule, ColorTheme.NAVY);
+    }
+
+    private byte[] generateExcel(ScheduleDTO schedule, ColorTheme theme) {
         try {
             Map<String, WeeklyScheduleDTO> levelTables =
                     WeeklyScheduleMapper.toLevelTables(schedule);
 
             Workbook workbook = new XSSFWorkbook();
 
-            CellStyle headerStyle = createHeaderStyle(workbook);
+            CellStyle headerStyle = createHeaderStyle(workbook, theme);
             CellStyle lectureStyle = createCellStyle(workbook, LECTURE_BG);
             CellStyle sectionStyle = createCellStyle(workbook, SECTION_BG);
             CellStyle breakStyle = createCellStyle(workbook, BREAK_BG);
@@ -135,7 +143,7 @@ public class ScheduleExcelService {
         }
     }
 
-    private CellStyle createHeaderStyle(Workbook workbook) {
+    private CellStyle createHeaderStyle(Workbook workbook, ColorTheme theme) {
         Font font = workbook.createFont();
         font.setBold(true);
         font.setColor(IndexedColors.WHITE.getIndex());
@@ -143,7 +151,8 @@ public class ScheduleExcelService {
 
         CellStyle style = workbook.createCellStyle();
         style.setFont(font);
-        style.setFillForegroundColor(HEADER_BG.getIndex());
+        style.setFillForegroundColor(theme == ColorTheme.BLACK
+                ? IndexedColors.BLACK.getIndex() : HEADER_BG.getIndex());
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         style.setAlignment(HorizontalAlignment.CENTER);
         style.setVerticalAlignment(VerticalAlignment.CENTER);

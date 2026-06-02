@@ -1,6 +1,7 @@
 package com.example.timetable.service;
 
 import com.example.timetable.dto.response.ScheduleDTO;
+import com.example.timetable.dto.response.ScheduleSummaryResponse;
 import com.example.timetable.entity.ScheduleGenerationJob;
 import com.example.timetable.scheduling.constraints.ConstraintViolation;
 
@@ -14,6 +15,10 @@ public interface ScheduleService {
     ScheduleGenerationJob getJob(UUID jobId);
 
     ScheduleDTO getScheduleById(Long id);
+
+    List<ScheduleSummaryResponse> findAll();
+
+    void deleteById(Long id);
 
     ScheduleDTO validateSchedule(Long id);
 

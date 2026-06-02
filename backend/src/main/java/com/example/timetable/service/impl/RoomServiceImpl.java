@@ -7,6 +7,7 @@ import com.example.timetable.mapper.RoomMapper;
 import com.example.timetable.repository.RoomRepository;
 import com.example.timetable.service.RoomService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional
 public class RoomServiceImpl implements RoomService {
 
@@ -83,3 +85,4 @@ public class RoomServiceImpl implements RoomService {
         roomRepository.deleteById(id);
     }
 }
+

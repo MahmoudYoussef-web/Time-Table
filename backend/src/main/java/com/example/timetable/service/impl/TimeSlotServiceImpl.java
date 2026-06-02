@@ -5,6 +5,7 @@ import com.example.timetable.repository.TimeSlotRepository;
 import com.example.timetable.service.TimeSlotService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional
 public class TimeSlotServiceImpl implements TimeSlotService {
 

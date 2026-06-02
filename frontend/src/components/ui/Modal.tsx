@@ -30,12 +30,12 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px]" onClick={onClose} />
       <div
         className={cn(
-          'relative bg-[--card] border border-[--border] rounded-[--radius-md] w-full mx-4 p-md',
+          'relative bg-[--card] border border-[--border] rounded-[--radius-md] w-full mx-4 p-6',
           'transition-all duration-150 opacity-100 scale-100',
           sizeClasses[size]
         )}
       >
-        <div className="headline-md mb-4 flex items-center justify-between">
+        <div className="display-md mb-4 flex items-center justify-between">
           {title}
           <button onClick={onClose} className="cursor-pointer hover:opacity-70">
             <X size={20} />
@@ -47,3 +47,4 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     document.body
   );
 }
+
