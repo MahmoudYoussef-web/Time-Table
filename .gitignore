@@ -6,3 +6,7 @@ target/
 app.err
 frontend/node_modules/
 frontend/dist/
+.opencode/
+backend/Dockerfile.bak
+backend/data/
+backend/timetable_backup_before_restructure.sql
