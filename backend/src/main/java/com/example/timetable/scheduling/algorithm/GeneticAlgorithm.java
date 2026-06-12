@@ -7,10 +7,12 @@ import com.example.timetable.entity.TimeSlot;
 import com.example.timetable.scheduling.algorithm.crossover.CrossoverStrategy;
 import com.example.timetable.scheduling.algorithm.mutation.MutationStrategy;
 import com.example.timetable.scheduling.algorithm.selection.SelectionStrategy;
+import com.example.timetable.scheduling.util.RoomTypeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.BiPredicate;
 
 public class GeneticAlgorithm {
 
@@ -23,6 +25,7 @@ public class GeneticAlgorithm {
     private final int elitismCount;
     private final double earlyStopThreshold;
     private final long maxExecutionMillis;
+    private final boolean roomTypeFilterEnabled;
 
     private final Random random;
     private final FitnessCalculator fitnessCalculator;
@@ -38,6 +41,7 @@ public class GeneticAlgorithm {
                             double earlyStopThreshold,
                             long maxExecutionMillis,
                             long randomSeed,
+                            boolean roomTypeFilterEnabled,
                             FitnessCalculator fitnessCalculator,
                             SelectionStrategy selectionStrategy,
                             CrossoverStrategy crossoverStrategy,
@@ -50,6 +54,7 @@ public class GeneticAlgorithm {
         this.elitismCount = elitismCount;
         this.earlyStopThreshold = earlyStopThreshold;
         this.maxExecutionMillis = maxExecutionMillis;
+        this.roomTypeFilterEnabled = roomTypeFilterEnabled;
         this.random = new Random(randomSeed);
         this.fitnessCalculator = fitnessCalculator;
         this.selectionStrategy = selectionStrategy;
@@ -63,10 +68,14 @@ public class GeneticAlgorithm {
 
         validateInputs(sections, rooms, slots);
 
+        BiPredicate<Section, Room> filter = roomTypeFilterEnabled
+                ? RoomTypeUtil::isCompatible
+                : null;
+
         long start = System.currentTimeMillis();
 
         List<Chromosome> population =
-                initializePopulation(sections, rooms, slots);
+                initializePopulation(sections, rooms, slots, filter);
 
         for (int generation = 0;
              generation < maxGenerations;
@@ -87,7 +96,7 @@ public class GeneticAlgorithm {
                 break;
             }
 
-            population = produceNextGeneration(population, rooms, slots);
+            population = produceNextGeneration(population, rooms, slots, filter);
         }
 
         fitnessCalculator.calculateFitness(population);
@@ -102,10 +111,14 @@ public class GeneticAlgorithm {
 
         validateInputs(sections, rooms, slots);
 
+        BiPredicate<Section, Room> filter = roomTypeFilterEnabled
+                ? RoomTypeUtil::isCompatible
+                : null;
+
         long start = System.currentTimeMillis();
 
         List<Chromosome> population =
-                initializePopulationWithLocks(sections, rooms, slots, lockedEntries);
+                initializePopulationWithLocks(sections, rooms, slots, lockedEntries, filter);
 
         for (int generation = 0;
              generation < maxGenerations;
@@ -125,7 +138,7 @@ public class GeneticAlgorithm {
                 break;
             }
 
-            population = produceNextGeneration(population, rooms, slots);
+            population = produceNextGeneration(population, rooms, slots, filter);
         }
 
         fitnessCalculator.calculateFitness(population);
@@ -136,7 +149,8 @@ public class GeneticAlgorithm {
     private List<Chromosome> produceNextGeneration(
             List<Chromosome> population,
             List<Room> rooms,
-            List<TimeSlot> slots) {
+            List<TimeSlot> slots,
+            BiPredicate<Section, Room> roomFilter) {
 
         List<Chromosome> next = new ArrayList<>(populationSize);
 
@@ -158,7 +172,7 @@ public class GeneticAlgorithm {
                             ? crossoverStrategy.crossover(parent1, parent2)
                             : parent1.copy();
 
-            mutationStrategy.mutate(child, rooms, slots, mutationRate);
+            mutationStrategy.mutate(child, rooms, slots, mutationRate, roomFilter);
 
             next.add(child);
         }
@@ -189,7 +203,8 @@ public class GeneticAlgorithm {
     private List<Chromosome> initializePopulation(
             List<Section> sections,
             List<Room> rooms,
-            List<TimeSlot> slots) {
+            List<TimeSlot> slots,
+            BiPredicate<Section, Room> roomFilter) {
 
         List<Chromosome> population =
                 new ArrayList<>(populationSize);
@@ -199,9 +214,17 @@ public class GeneticAlgorithm {
             List<Gene> genes = new ArrayList<>();
 
             for (Section section : sections) {
+                List<Room> pool = roomFilter != null
+                        ? rooms.stream()
+                            .filter(r -> roomFilter.test(section, r))
+                            .toList()
+                        : rooms;
+                if (pool.isEmpty()) {
+                    pool = rooms;
+                }
                 genes.add(new Gene(
                         section,
-                        rooms.get(random.nextInt(rooms.size())),
+                        pool.get(random.nextInt(pool.size())),
                         slots.get(random.nextInt(slots.size()))
                 ));
             }
@@ -216,7 +239,8 @@ public class GeneticAlgorithm {
             List<Section> sections,
             List<Room> rooms,
             List<TimeSlot> slots,
-            Map<Long, ScheduleEntry> lockedEntries) {
+            Map<Long, ScheduleEntry> lockedEntries,
+            BiPredicate<Section, Room> roomFilter) {
 
         List<Chromosome> population =
                 new ArrayList<>(populationSize);
@@ -242,9 +266,18 @@ public class GeneticAlgorithm {
 
                 } else {
 
+                    List<Room> pool = roomFilter != null
+                            ? rooms.stream()
+                                .filter(r -> roomFilter.test(section, r))
+                                .toList()
+                            : rooms;
+                    if (pool.isEmpty()) {
+                        pool = rooms;
+                    }
+
                     genes.add(new Gene(
                             section,
-                            rooms.get(random.nextInt(rooms.size())),
+                            pool.get(random.nextInt(pool.size())),
                             slots.get(random.nextInt(slots.size()))
                     ));
                 }

@@ -20,4 +20,6 @@ public class GAProperties {
     private long maxExecutionMillis;
 
     private long randomSeed;
+
+    private boolean roomTypeFilterEnabled = true;
 }

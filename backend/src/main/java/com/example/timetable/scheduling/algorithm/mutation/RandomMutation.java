@@ -1,12 +1,14 @@
 package com.example.timetable.scheduling.algorithm.mutation;
 
 import com.example.timetable.entity.Room;
+import com.example.timetable.entity.Section;
 import com.example.timetable.entity.TimeSlot;
 import com.example.timetable.scheduling.algorithm.Chromosome;
 import com.example.timetable.scheduling.algorithm.Gene;
 
 import java.util.List;
 import java.util.Random;
+import java.util.function.BiPredicate;
 
 public class RandomMutation implements MutationStrategy {
 
@@ -20,7 +22,8 @@ public class RandomMutation implements MutationStrategy {
     public void mutate(Chromosome chromosome,
                        List<Room> rooms,
                        List<TimeSlot> slots,
-                       double mutationRate) {
+                       double mutationRate,
+                       BiPredicate<Section, Room> roomFilter) {
 
         for (Gene gene : chromosome.getGenes()) {
 
@@ -39,9 +42,18 @@ public class RandomMutation implements MutationStrategy {
 
                 } else {
 
-                    gene.setRoom(
-                            rooms.get(random.nextInt(rooms.size()))
-                    );
+                    Room selected;
+                    if (roomFilter != null) {
+                        List<Room> compatible = rooms.stream()
+                                .filter(r -> roomFilter.test(gene.getSection(), r))
+                                .toList();
+                        selected = compatible.isEmpty()
+                                ? gene.getRoom()
+                                : compatible.get(random.nextInt(compatible.size()));
+                    } else {
+                        selected = rooms.get(random.nextInt(rooms.size()));
+                    }
+                    gene.setRoom(selected);
                 }
             }
         }

@@ -30,6 +30,7 @@ public class GeneticAlgorithmConfig {
                 props.getEarlyStopThreshold(),
                 props.getMaxExecutionMillis(),
                 props.getRandomSeed(),
+                props.isRoomTypeFilterEnabled(),
                 fitnessCalculator,
                 selectionStrategy,
                 crossoverStrategy,

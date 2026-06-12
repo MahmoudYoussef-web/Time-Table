@@ -7,6 +7,7 @@ import com.example.timetable.scheduling.algorithm.Chromosome;
 import com.example.timetable.scheduling.algorithm.Gene;
 import com.example.timetable.scheduling.constraints.ConstraintViolation;
 import com.example.timetable.scheduling.constraints.HardConstraint;
+import com.example.timetable.scheduling.util.RoomTypeUtil;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -75,11 +76,6 @@ public class RoomTypeConstraint implements HardConstraint {
             }
         }
 
-        return switch (sessionType) {
-            case LECTURE -> roomType == RoomType.LECTURE_HALL;
-            case LAB -> roomType == RoomType.LAB;
-            case TUTORIAL, SEMINAR, SECTION ->
-                    roomType == RoomType.SEMINAR_ROOM || roomType == RoomType.LECTURE_HALL;
-        };
+        return RoomTypeUtil.isCompatible(sessionType, roomType);
     }
 }
