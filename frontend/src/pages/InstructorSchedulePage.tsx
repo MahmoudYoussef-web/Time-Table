@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CalendarOff } from 'lucide-react';
-import { toast } from 'sonner';
+import { CalendarOff, UserX } from 'lucide-react';
 import { getMySchedule } from '../api/weeklySchedule';
 import { WeeklyGrid } from '../components/schedule/WeeklyGrid';
 import { WeeklyScheduleDTO } from '../types';
@@ -9,11 +8,16 @@ import { Spinner } from '../components/ui/Spinner';
 export function InstructorSchedulePage() {
   const [data, setData] = useState<WeeklyScheduleDTO | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notInstructor, setNotInstructor] = useState(false);
 
   useEffect(() => {
     getMySchedule()
       .then(setData)
-      .catch(() => toast.error('Failed to load your schedule'))
+      .catch((err) => {
+        if (err?.response?.status === 404) {
+          setNotInstructor(true);
+        }
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -21,6 +25,16 @@ export function InstructorSchedulePage() {
     return (
       <div className="flex items-center justify-center py-[76px]">
         <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (notInstructor) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4">
+        <UserX className="w-12 h-12 text-[--muted-foreground]" />
+        <p className="display-md text-[--muted-foreground]">No instructor profile found</p>
+        <p className="body-md text-[--muted-foreground]">This account is not linked to an instructor profile.</p>
       </div>
     );
   }
@@ -43,4 +57,3 @@ export function InstructorSchedulePage() {
     </div>
   );
 }
-

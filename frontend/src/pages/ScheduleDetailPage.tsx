@@ -43,13 +43,21 @@ export function ScheduleDetailPage() {
 
   useEffect(() => { fetchData(); }, [id]);
 
+  const getErrorMessage = (err: unknown) => {
+    if (err && typeof err === 'object' && 'response' in err) {
+      const data = (err as any).response?.data;
+      if (data?.message) return data.message;
+    }
+    return null;
+  };
+
   const handleValidate = async () => {
     if (!id) return;
     try {
       await schedulesApi.validateSchedule(Number(id));
       toast.success('Schedule validated');
       fetchData();
-    } catch { toast.error('Failed to validate'); }
+    } catch (err: unknown) { toast.error(getErrorMessage(err) || 'Failed to validate'); }
   };
 
   const handleLock = async () => {
@@ -58,7 +66,7 @@ export function ScheduleDetailPage() {
       await schedulesApi.lockSchedule(Number(id));
       toast.success('Schedule locked');
       fetchData();
-    } catch { toast.error('Failed to lock'); }
+    } catch (err: unknown) { toast.error(getErrorMessage(err) || 'Failed to lock'); }
   };
 
   const handleExport = async (format: 'pdf' | 'excel' | 'png') => {
@@ -68,7 +76,7 @@ export function ScheduleDetailPage() {
       else if (format === 'excel') await schedulesApi.downloadExcel(Number(id));
       else await schedulesApi.downloadPng(Number(id));
       toast.success(`Exported as ${format.toUpperCase()}`);
-    } catch { toast.error(`Failed to export`); }
+    } catch (err: unknown) { toast.error(getErrorMessage(err) || 'Failed to export'); }
   };
 
   if (loading) return <div className="h-64 bg-[--muted] rounded animate-pulse" />;

@@ -11,6 +11,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -24,7 +25,17 @@ public class TimeSlotServiceImpl implements TimeSlotService {
 
     @Override
     public List<TimeSlot> findAll() {
-        return timeSlotRepository.findAll();
+        return timeSlotRepository.findAll().stream()
+                .sorted(Comparator.comparingInt((TimeSlot slot) -> switch (slot.getDay()) {
+                    case SUNDAY -> 1;
+                    case MONDAY -> 2;
+                    case TUESDAY -> 3;
+                    case WEDNESDAY -> 4;
+                    case THURSDAY -> 5;
+                    case FRIDAY -> 6;
+                    case SATURDAY -> 7;
+                }).thenComparing(TimeSlot::getStartTime))
+                .toList();
     }
 
     @Override

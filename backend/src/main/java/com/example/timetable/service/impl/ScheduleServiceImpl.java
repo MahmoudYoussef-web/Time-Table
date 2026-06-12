@@ -24,9 +24,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -46,9 +43,6 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final AsyncScheduleJobService asyncScheduleJobService;
     private final ScheduleGenerationJobRepository jobRepository;
     private final ConflictEvaluationService conflictEvaluationService;
-
-    private static final Logger log =
-            LoggerFactory.getLogger(ScheduleServiceImpl.class);
 
     @Override
     public UUID generateScheduleAsync(Long semesterId) {
@@ -78,7 +72,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public List<ScheduleSummaryResponse> findAll() {
-        return scheduleRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
+        return scheduleRepository.findAllWithSemester()
                 .stream()
                 .map(s -> new ScheduleSummaryResponse(
                         s.getId(),

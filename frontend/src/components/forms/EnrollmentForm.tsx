@@ -6,8 +6,8 @@ import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
 
 const schema = z.object({
-  studentId: z.number().positive(),
-  sectionId: z.number().positive(),
+  studentId: z.coerce.number().positive('Select a student'),
+  sectionId: z.coerce.number().positive('Select a section'),
   status: z.string().min(1, 'Status is required'),
 });
 
@@ -27,17 +27,13 @@ export function EnrollmentForm({ defaultValues, onSubmit, onCancel, students, se
     defaultValues,
   });
 
-  const handleFormSubmit = (formData: FormData) => {
-    return onSubmit(formData as EnrollmentRequest);
-  };
-
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)}>
-      <Select label="Student" {...register('studentId', { valueAsNumber: true })} error={errors.studentId?.message}>
+    <form onSubmit={handleSubmit((formData) => onSubmit(formData as EnrollmentRequest))}>
+      <Select label="Student" {...register('studentId')} error={errors.studentId?.message}>
         <option value="">Select student</option>
         {students.map(s => <option key={s.id} value={s.id}>{s.fullName}</option>)}
       </Select>
-      <Select label="Section" {...register('sectionId', { valueAsNumber: true })} error={errors.sectionId?.message}>
+      <Select label="Section" {...register('sectionId')} error={errors.sectionId?.message}>
         <option value="">Select section</option>
         {sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
       </Select>

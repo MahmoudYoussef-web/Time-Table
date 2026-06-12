@@ -13,6 +13,9 @@ import java.util.Optional;
 public interface ScheduleRepository
         extends JpaRepository<Schedule, Long> {
 
+    @Query("SELECT s FROM Schedule s JOIN FETCH s.semester ORDER BY s.createdAt DESC")
+    List<Schedule> findAllWithSemester();
+
     Optional<Schedule> findTopBySemesterOrderByCreatedAtDesc(
             Semester semester);
 
@@ -20,6 +23,8 @@ public interface ScheduleRepository
 
     Optional<Schedule> findTopByStatusOrderByCreatedAtDesc(
             ScheduleStatus status);
+
+    boolean existsBySemesterId(Long semesterId);
 
     boolean existsBySemesterIdAndStatus(
             Long semesterId,

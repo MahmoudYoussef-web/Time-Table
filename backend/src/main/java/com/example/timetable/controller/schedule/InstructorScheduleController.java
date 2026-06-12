@@ -7,10 +7,13 @@ import com.example.timetable.service.ScheduleService;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/instructor/schedule")
@@ -20,26 +23,26 @@ public class InstructorScheduleController {
     private final ScheduleService scheduleService;
     private final InstructorService instructorService;
 
-    // Get schedule for logged-in instructor
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     @GetMapping("/my")
-    public ResponseEntity<WeeklyScheduleDTO> getMySchedule(
+    public ResponseEntity<?> getMySchedule(
             Authentication authentication
     ) {
-
-        // Email from JWT
         String email = authentication.getName();
 
-        // Get instructor id
-        Long instructorId =
-                instructorService
-                        .findByEmail(email)
-                        .getId();
-
-        return ResponseEntity.ok(
-                WeeklyScheduleMapper.toWeeklyTable(
-                        scheduleService.getByInstructor(instructorId)
-                )
-        );
+        try {
+            Long instructorId = instructorService.findByEmail(email).getId();
+            return ResponseEntity.ok(
+                    WeeklyScheduleMapper.toWeeklyTable(
+                            scheduleService.getByInstructor(instructorId)
+                    )
+            );
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(java.util.Map.of(
+                            "success", false,
+                            "message", "No instructor profile found for this account"
+                    ));
+        }
     }
 }

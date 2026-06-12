@@ -50,8 +50,8 @@ export function SchedulesPage() {
       await schedulesApi.deleteSchedule(deleteTarget.id);
       toast.success('Schedule deleted');
       fetchData();
-    } catch {
-      toast.error('Failed to delete schedule');
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || 'Failed to delete schedule');
     } finally {
       setDeleting(false);
       setDeleteTarget(null);
@@ -64,9 +64,17 @@ export function SchedulesPage() {
       else if (format === 'excel') await schedulesApi.downloadExcel(id);
       else await schedulesApi.downloadPng(id);
       toast.success(`Exported as ${format.toUpperCase()}`);
-    } catch {
-      toast.error(`Failed to export ${format.toUpperCase()}`);
+    } catch (err: unknown) {
+      toast.error((getErrorMessage(err) || `Failed to export ${format.toUpperCase()}`));
     }
+  };
+
+  const getErrorMessage = (err: unknown) => {
+    if (err && typeof err === 'object' && 'response' in err) {
+      const data = (err as any).response?.data;
+      if (data?.message) return data.message;
+    }
+    return null;
   };
 
   const handleValidate = async (id: number) => {
@@ -74,8 +82,8 @@ export function SchedulesPage() {
       await schedulesApi.validateSchedule(id);
       toast.success('Schedule validated');
       fetchData();
-    } catch {
-      toast.error('Failed to validate schedule');
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || 'Failed to validate schedule');
     }
   };
 
@@ -84,8 +92,8 @@ export function SchedulesPage() {
       await schedulesApi.lockSchedule(id);
       toast.success('Schedule locked');
       fetchData();
-    } catch {
-      toast.error('Failed to lock schedule');
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || 'Failed to lock schedule');
     }
   };
 

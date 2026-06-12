@@ -5,10 +5,10 @@ import com.example.timetable.dto.request.StudentRequest;
 import com.example.timetable.entity.Department;
 import com.example.timetable.entity.Student;
 import com.example.timetable.entity.User;
-import com.example.timetable.mapper.StudentMapper;
 import com.example.timetable.repository.UserRepository;
 import com.example.timetable.service.DepartmentService;
 import com.example.timetable.service.StudentService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -17,7 +17,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -38,6 +37,9 @@ class StudentControllerTest {
 
     @MockBean
     private DepartmentService departmentService;
+
+    @MockBean
+    private PasswordEncoder passwordEncoder;
 
     @Test
     void getAllReturnsStudentList() throws Exception {
@@ -89,22 +91,24 @@ class StudentControllerTest {
 
     @Test
     void createReturns201() throws Exception {
+        Department dept = new Department();
+        dept.setId(1L);
+        dept.setName("CS");
+
         User user = new User();
         user.setId(1L);
         user.setFullName("Bob");
         user.setEmail("bob@test.com");
 
-        Department dept = new Department();
-        dept.setId(1L);
-        dept.setName("CS");
-
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(departmentService.findById(1L)).thenReturn(dept);
+        when(passwordEncoder.encode(any())).thenReturn("encoded");
 
-        Student student = StudentMapper.toEntity(
-                new StudentRequest(1L, "2025/2026", 3, 1L), user, dept
-        );
+        Student student = new Student();
         student.setId(1L);
+        student.setUser(user);
+        student.setAcademicYear("2025/2026");
+        student.setLevel(3);
+        student.setDepartment(dept);
 
         when(studentService.save(any())).thenReturn(student);
 
@@ -112,7 +116,9 @@ class StudentControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "userId": 1,
+                                    "fullName": "Bob",
+                                    "email": "bob@test.com",
+                                    "password": "secret123",
                                     "academicYear": "2025/2026",
                                     "level": 3,
                                     "departmentId": 1

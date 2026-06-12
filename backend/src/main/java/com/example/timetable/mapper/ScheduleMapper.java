@@ -6,6 +6,7 @@ import com.example.timetable.entity.Schedule;
 import com.example.timetable.entity.ScheduleEntry;
 
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -40,7 +41,7 @@ public class ScheduleMapper {
         );
 
         if (schedule.getUnscheduledSectionIds() != null) {
-            dto.setUnscheduledSectionIds(schedule.getUnscheduledSectionIds());
+            dto.setUnscheduledSectionIds(new ArrayList<>(schedule.getUnscheduledSectionIds()));
         }
 
         if (schedule.getSemester() != null) {
