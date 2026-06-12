@@ -51,97 +51,115 @@ public class SchedulePngService {
     }
 
     private BufferedImage cropWhitespace(BufferedImage img, int paddingPx) {
-        if (img.getHeight() <= paddingPx * 2) return img;
-        int lastContent = img.getHeight() / 3;
-        outer:
-        for (int y = img.getHeight() - 1; y > img.getHeight() / 3; y--) {
+        if (img.getWidth() <= paddingPx * 2 || img.getHeight() <= paddingPx * 2)
+            return img;
+
+        int minX = img.getWidth();
+        int maxX = 0;
+        int maxY = img.getHeight() / 3;
+
+        for (int y = 0; y < img.getHeight(); y++) {
             for (int x = 0; x < img.getWidth(); x++) {
                 if ((img.getRGB(x, y) & 0xFFFFFF) != 0xFFFFFF) {
-                    lastContent = y;
-                    break outer;
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (y > maxY) maxY = y;
                 }
             }
         }
-        int cropHeight = Math.min(lastContent + paddingPx, img.getHeight());
-        return img.getSubimage(0, 0, img.getWidth(), cropHeight);
+
+        if (minX >= maxX || maxY <= 0) return img;
+
+        int cropX = Math.max(0, minX - paddingPx);
+        int cropY = 0;
+        int cropW = Math.min(img.getWidth() - cropX, maxX - minX + 2 * paddingPx);
+        int cropH = Math.min(img.getHeight() - cropY, maxY + paddingPx);
+
+        return img.getSubimage(cropX, cropY, cropW, cropH);
     }
 
     private String buildHtml(ScheduleRenderModel model) {
         boolean isNavy = model.getTheme() == ColorTheme.NAVY;
-        String primaryHex = isNavy ? "#0D1B4B" : "#000000";
-        String borderHex = isNavy ? "#0D1B4B" : "#333333";
-        String grayHex = "#777777";
-        String altBgHex = isNavy ? "#FAFBFF" : "#FFFFFF";
+        String headerBg = isNavy ? "#274472" : "#000000";
+        String headerBorder = isNavy ? "#1E3A5F" : "#333333";
+        String outerBorder = isNavy ? "#334155" : "#555555";
+        String gridBorder = isNavy ? "#CBD5E1" : "#CCCCCC";
+        String timeBg = "#F8FAFC";
+        String timeText = "#000000";
+        String subtitleColor = isNavy ? "#1E293B" : "#333333";
+        String grayHex = "#64748B";
+        String altBgHex = isNavy ? "#F8FAFC" : "#F5F5F5";
+        String breakBg = isNavy ? "#EEF2FF" : "#E8E8E8";
+        String breakText = isNavy ? "#334155" : "#444444";
+        String emptyColor = "#94A3B8";
 
         return "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" "
                 + "\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">"
                 + "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head>"
                 + "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"/>"
                 + "<style type=\"text/css\">"
-                + buildCss(primaryHex, borderHex, grayHex, altBgHex, isNavy)
+                + buildCss(headerBg, headerBorder, outerBorder, gridBorder, timeBg, timeText, subtitleColor, grayHex, altBgHex, isNavy, breakBg, breakText, emptyColor)
                 + "</style></head><body>"
-                + buildHeaderHtml(model, primaryHex, grayHex)
-                + buildTableHtml(model, primaryHex, borderHex, grayHex, isNavy, altBgHex)
+                + buildHeaderHtml(model, grayHex)
+                + buildTableHtml(model, headerBg, headerBorder, outerBorder, gridBorder, timeBg, timeText, grayHex, isNavy, altBgHex, breakBg, breakText, emptyColor)
                 + buildFooterHtml(model, grayHex)
                 + "</body></html>";
     }
 
-    private String buildCss(String primaryHex, String borderHex, String grayHex,
-                            String altBgHex, boolean isNavy) {
+    private String buildCss(String headerBg, String headerBorder, String outerBorder,
+                            String gridBorder, String timeBg, String timeText,
+                            String subtitleColor, String grayHex, String altBgHex,
+                            boolean isNavy, String breakBg, String breakText, String emptyColor) {
         int h = ScheduleRenderModel.HEADER_ROW_HEIGHT;
         int cr = ScheduleRenderModel.COURSE_ROW_HEIGHT;
-        int br = ScheduleRenderModel.BREAK_ROW_HEIGHT;
 
         return "* { margin: 0; padding: 0; box-sizing: border-box; }"
                 + "body { background: #FFFFFF; width: " + TARGET_WIDTH_PX + "px;"
                 + " font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }"
-                + ".wrapper { width: 96%; margin: 16px auto; }"
-                + ".header { text-align: center; margin-bottom: 10px; }"
-                + ".title { font-size: " + ScheduleRenderModel.TITLE_SIZE + "px; font-weight: 900;"
-                + " color: " + primaryHex + "; letter-spacing: 1px; line-height: 1.2; }"
-                + ".subtitle { font-size: " + ScheduleRenderModel.SUBTITLE_SIZE + "px; font-weight: 700;"
-                + " color: " + primaryHex + "; margin-top: 4px; }"
+                + ".wrapper { width: 90%; max-width: 1800px; margin: 20px auto; }"
+                + ".header { text-align: center; margin-bottom: 8px; }"
+                + ".title { font-size: " + ScheduleRenderModel.TITLE_SIZE + "px; font-weight: 800;"
+                + " color: " + headerBg + "; letter-spacing: 1px; line-height: 1.2; }"
+                + ".subtitle { font-size: " + ScheduleRenderModel.SUBTITLE_SIZE + "px; font-weight: 600;"
+                + " color: " + subtitleColor + "; margin-top: 4px; }"
                 + ".date-line { font-size: " + ScheduleRenderModel.DATE_SIZE + "px; font-weight: 400;"
                 + " color: " + grayHex + "; margin-top: 6px; }"
-                + ".divider { border: none; border-top: 2px solid " + borderHex + "; margin: 10px 0 14px 0; }"
-                + ".tbl { width: 100%; border-collapse: collapse; border: 2px solid " + borderHex + "; }"
-                + ".tbl th { background: " + primaryHex + "; color: #FFFFFF;"
+                + ".divider { border: none; border-top: 2px solid " + headerBg + "; margin: 8px 0 14px 0; }"
+                + ".tbl { width: 100%; border-collapse: collapse;"
+                + " border: 2px solid " + outerBorder + "; }"
+                + ".tbl th { background: " + headerBg + "; color: #FFFFFF;"
                 + " font-size: " + ScheduleRenderModel.HEADER_SIZE + "px; font-weight: 700;"
                 + " text-align: center; padding: 8px; height: " + h + "px;"
-                + " border: 1px solid " + borderHex + "; }"
-                + ".tbl td { border: 1px solid " + borderHex + "; padding: 6px 4px;"
+                + " letter-spacing: 0.5px; border: 1px solid " + headerBorder + "; }"
+                + ".tbl td { border: 1px solid " + gridBorder + "; padding: 6px 4px;"
                 + " height: " + cr + "px; vertical-align: middle; }"
                 + ".time-cell { font-size: " + ScheduleRenderModel.TIME_SIZE + "px; font-weight: 700;"
-                + " color: " + primaryHex + "; text-align: center; vertical-align: middle;"
-                + " line-height: 1.3; padding: 6px; }"
+                + " color: " + timeText + "; text-align: center; vertical-align: middle;"
+                + " line-height: 1.3; padding: 8px 4px; background: " + timeBg + "; }"
                 + ".time-sub { font-size: 9px; font-weight: 400; color: " + grayHex + "; display: block; }"
-                + ".entry { text-align: center; line-height: 1.3; padding: 2px; }"
+                + ".entry { text-align: center; line-height: 1.4; padding: 2px; }"
                 + ".entry-conflict { border-left: 4px solid #CC0000; background-color: #FFF0F0; }"
                 + ".entry-conflict .entry-code { color: #CC0000; }"
                 + ".entry-code { font-size: " + ScheduleRenderModel.COURSE_CODE_SIZE + "px; font-weight: 700;"
-                + " color: " + primaryHex + "; display: block; margin-bottom: 6px; }"
-                + ".entry-name { font-size: " + ScheduleRenderModel.COURSE_NAME_SIZE + "px; font-weight: 600;"
-                + " color: " + primaryHex + "; display: block; margin-bottom: 4px; }"
+                + " color: " + headerBg + "; display: block; margin-bottom: 4px; }"
+                + ".entry-name { font-size: " + ScheduleRenderModel.COURSE_NAME_SIZE + "px; font-weight: 500;"
+                + " color: #1E293B; display: block; margin-bottom: 3px; }"
                 + ".entry-instructor { font-size: " + ScheduleRenderModel.INSTRUCTOR_SIZE + "px;"
-                + " color: " + primaryHex + "; display: block; margin-bottom: 2px; }"
+                + " color: " + grayHex + "; display: block; margin-bottom: 2px; }"
                 + ".entry-room { font-size: " + ScheduleRenderModel.ROOM_SIZE + "px;"
                 + " color: " + grayHex + "; display: block; }"
                 + ".empty-cell { text-align: center; vertical-align: middle;"
-                + " font-size: 13px; color: " + grayHex + "; }"
-                + ".break-row td { background: #F5F5F5; }"
-                + ".break-time { text-align: center; font-size: " + ScheduleRenderModel.TIME_SIZE + "px; font-weight: 700;"
-                + " color: #FFFFFF; vertical-align: middle; padding: 8px; background: " + primaryHex + ";"
-                + " height: " + br + "px; }"
-                + ".break-time .time-sub { font-size: 9px; font-weight: 400; color: #CCCCCC; display: block; }"
+                + " font-size: 13px; color: " + emptyColor + "; }"
+                + ".break-row td { background: " + breakBg + "; }"
                 + ".break-cell { text-align: center; vertical-align: middle;"
-                + " font-size: 12px; font-weight: 700; color: " + primaryHex + "; }"
+                + " font-size: 12px; font-weight: 600; color: " + breakText + "; }"
                 + ".alt-row td { background: " + altBgHex + "; }"
-                + ".date-label { font-weight: 700; color: " + primaryHex + "; margin-right: 6px; }"
+                + ".date-label { font-weight: 700; color: " + grayHex + "; margin-right: 6px; }"
                 + ".footer { text-align: center; margin-top: 12px; }"
                 + ".footer-text { font-size: " + ScheduleRenderModel.FOOTER_SIZE + "px; color: " + grayHex + "; }";
     }
 
-    private String buildHeaderHtml(ScheduleRenderModel model, String primaryHex, String grayHex) {
+    private String buildHeaderHtml(ScheduleRenderModel model, String grayHex) {
         return "<div class=\"wrapper header\">"
                 + "<div class=\"title\">" + esc(model.getTitle()) + "</div>"
                 + "<div class=\"subtitle\">" + esc(model.getSubtitle()) + "</div>"
@@ -153,9 +171,11 @@ public class SchedulePngService {
                 + "<div class=\"wrapper\"><hr class=\"divider\"/></div>";
     }
 
-    private String buildTableHtml(ScheduleRenderModel model, String primaryHex,
-                                   String borderHex, String grayHex,
-                                   boolean isNavy, String altBgHex) {
+    private String buildTableHtml(ScheduleRenderModel model, String headerBg,
+                                   String headerBorder, String outerBorder,
+                                   String gridBorder, String timeBg, String timeText,
+                                   String grayHex, boolean isNavy, String altBgHex,
+                                   String breakBg, String breakText, String emptyColor) {
         StringBuilder sb = new StringBuilder();
         sb.append("<div class=\"wrapper\"><table class=\"tbl\">");
         sb.append("<thead><tr>");
@@ -170,7 +190,7 @@ public class SchedulePngService {
 
             if (row.getType() == RowType.BREAK) {
                 sb.append("<tr class=\"break-row\">");
-                sb.append("<td class=\"break-time\">").append(esc(row.getTimeLabel()))
+                sb.append("<td class=\"time-cell\">").append(esc(row.getTimeLabel()))
                         .append("<span class=\"time-sub\">").append(esc(row.getTimeSubLabel())).append("</span></td>");
                 for (int d = 0; d < 6; d++) {
                     sb.append("<td class=\"break-cell\">Break</td>");

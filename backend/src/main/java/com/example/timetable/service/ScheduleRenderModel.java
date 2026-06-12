@@ -44,24 +44,20 @@ public class ScheduleRenderModel {
             "SATURDAY", "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY"
     );
 
-    public static final List<String> STANDARD_TIMES = List.of(
-            "08:00", "10:00", "12:00", "14:00", "16:00"
-    );
-
-    public static final String BREAK_TIME = "12:00";
+    private static final String BREAK_THRESHOLD = "12:00";
 
     public static final int TITLE_SIZE = 36;
     public static final int SUBTITLE_SIZE = 20;
     public static final int DATE_SIZE = 13;
     public static final int HEADER_SIZE = 13;
     public static final int TIME_SIZE = 11;
-    public static final int COURSE_CODE_SIZE = 14;
-    public static final int COURSE_NAME_SIZE = 11;
-    public static final int INSTRUCTOR_SIZE = 10;
-    public static final int ROOM_SIZE = 10;
+    public static final int COURSE_CODE_SIZE = 16;
+    public static final int COURSE_NAME_SIZE = 13;
+    public static final int INSTRUCTOR_SIZE = 12;
+    public static final int ROOM_SIZE = 12;
     public static final int FOOTER_SIZE = 9;
 
-    public static final int HEADER_ROW_HEIGHT = 40;
+    public static final int HEADER_ROW_HEIGHT = 44;
     public static final int COURSE_ROW_HEIGHT = 90;
     public static final int BREAK_ROW_HEIGHT = 40;
 
@@ -123,7 +119,9 @@ public class ScheduleRenderModel {
             if (weekly == null) continue;
 
             Map<String, Map<String, SlotDTO>> dataMap = buildDataMap(weekly);
-            List<RowDef> rows = buildRows(dataMap);
+            List<String> timeSlots = extractTimeSlotsFromDataMap(dataMap);
+            String breakTime = findBreakTime(timeSlots);
+            List<RowDef> rows = buildRows(dataMap, timeSlots, breakTime);
             String subtitle = level + " \u2014 Semester: "
                     + (schedule.getSemesterName() != null ? schedule.getSemesterName() : "N/A");
 
@@ -151,6 +149,9 @@ public class ScheduleRenderModel {
             byDay.computeIfAbsent(e.dayOfWeek(), k -> new ArrayList<>()).add(e);
         }
 
+        List<String> timeSlots = extractTimeSlots(entries);
+        String breakTime = findBreakTime(timeSlots);
+
         Map<String, Map<String, SlotDTO>> dataMap = new LinkedHashMap<>();
         for (String day : DAYS) {
             Map<String, SlotDTO> slotMap = new LinkedHashMap<>();
@@ -158,14 +159,14 @@ public class ScheduleRenderModel {
             for (ScheduleEntryDTO e : byDay.get(day)) {
                 seen.putIfAbsent(e.startTime(), e);
             }
-            for (String time : STANDARD_TIMES) {
+            for (String time : timeSlots) {
                 ScheduleEntryDTO entry = seen.get(time);
                 slotMap.put(time, entry != null ? new SlotDTO(time, calcEndTime(time), entry) : null);
             }
             dataMap.put(day, slotMap);
         }
 
-        List<RowDef> rows = buildRows(dataMap);
+        List<RowDef> rows = buildRows(dataMap, timeSlots, breakTime);
         String subtitle = displayName + " \u2014 Semester: "
                 + (schedule.getSemesterName() != null ? schedule.getSemesterName() : "N/A");
 
@@ -213,12 +214,14 @@ public class ScheduleRenderModel {
         return cols;
     }
 
-    private static List<RowDef> buildRows(Map<String, Map<String, SlotDTO>> dataMap) {
+    private static List<RowDef> buildRows(Map<String, Map<String, SlotDTO>> dataMap,
+                                          List<String> timeSlots,
+                                          String breakTime) {
         List<RowDef> rows = new ArrayList<>();
 
-        for (int i = 0; i < STANDARD_TIMES.size(); i++) {
-            String timeKey = STANDARD_TIMES.get(i);
-            boolean isBreak = timeKey.equals(BREAK_TIME);
+        for (int i = 0; i < timeSlots.size(); i++) {
+            String timeKey = timeSlots.get(i);
+            boolean isBreak = timeKey.equals(breakTime);
 
             if (isBreak) {
                 RowDef breakRow = new RowDef(RowType.BREAK, BREAK_ROW_HEIGHT);
@@ -243,6 +246,7 @@ public class ScheduleRenderModel {
                             e.courseName(),
                             e.instructorName(),
                             roomLabel + e.roomNumber(),
+                            e.sessionType() != null ? e.sessionType() : "LECTURE",
                             false,
                             e.hardViolations() > 0
                     ));
@@ -254,6 +258,31 @@ public class ScheduleRenderModel {
         }
 
         return rows;
+    }
+
+    private static List<String> extractTimeSlots(List<ScheduleEntryDTO> entries) {
+        return entries.stream()
+                .map(ScheduleEntryDTO::startTime)
+                .distinct()
+                .sorted()
+                .toList();
+    }
+
+    private static List<String> extractTimeSlotsFromDataMap(Map<String, Map<String, SlotDTO>> dataMap) {
+        return dataMap.values().stream()
+                .flatMap(m -> m.keySet().stream())
+                .distinct()
+                .sorted()
+                .toList();
+    }
+
+    private static String findBreakTime(List<String> timeSlots) {
+        for (String time : timeSlots) {
+            if (time.compareTo(BREAK_THRESHOLD) >= 0) {
+                return time;
+            }
+        }
+        return null;
     }
 
     public enum RowType { HEADER, COURSE, BREAK }
@@ -300,20 +329,22 @@ public class ScheduleRenderModel {
     }
 
     public static class CellContent {
-        public static final CellContent EMPTY = new CellContent("", "", "", "", true, false);
+        public static final CellContent EMPTY = new CellContent("", "", "", "", "", true, false);
 
         private final String courseCode;
         private final String courseName;
         private final String instructor;
         private final String room;
+        private final String sessionType;
         private final boolean empty;
         private final boolean conflict;
 
-        public CellContent(String courseCode, String courseName, String instructor, String room, boolean empty, boolean conflict) {
+        public CellContent(String courseCode, String courseName, String instructor, String room, String sessionType, boolean empty, boolean conflict) {
             this.courseCode = courseCode;
             this.courseName = courseName;
             this.instructor = instructor;
             this.room = room;
+            this.sessionType = sessionType;
             this.empty = empty;
             this.conflict = conflict;
         }
@@ -322,6 +353,7 @@ public class ScheduleRenderModel {
         public String getCourseName() { return courseName; }
         public String getInstructor() { return instructor; }
         public String getRoom() { return room; }
+        public String getSessionType() { return sessionType; }
         public boolean isEmpty() { return empty; }
         public boolean hasConflict() { return conflict; }
     }
