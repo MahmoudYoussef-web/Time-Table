@@ -16,6 +16,7 @@ public class InstructorAvailabilityController {
 
     private final InstructorAvailabilityService service;
 
+    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
     @GetMapping
     public ResponseEntity<List<TimeSlotResponse>> getUnavailable(@PathVariable Long instructorId) {
         return ResponseEntity.ok(service.getUnavailableSlots(instructorId));

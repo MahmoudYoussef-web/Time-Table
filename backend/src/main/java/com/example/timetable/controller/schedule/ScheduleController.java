@@ -1,9 +1,13 @@
 package com.example.timetable.controller.schedule;
 
+import com.example.timetable.dto.response.ScheduleDTO;
 import com.example.timetable.entity.ScheduleGenerationJob;
+import com.example.timetable.entity.enums.YearLevel;
 import com.example.timetable.scheduling.constraints.ConstraintViolation;
+import com.example.timetable.service.ColorTheme;
 import com.example.timetable.service.ScheduleExcelService;
 import com.example.timetable.service.SchedulePdfService;
+import com.example.timetable.service.SchedulePngService;
 import com.example.timetable.service.ScheduleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -24,6 +28,7 @@ public class ScheduleController {
     private final ScheduleService scheduleService;
     private final SchedulePdfService schedulePdfService;
     private final ScheduleExcelService scheduleExcelService;
+    private final SchedulePngService schedulePngService;
 
 
     // ===============================
@@ -33,6 +38,15 @@ public class ScheduleController {
     @GetMapping
     public ResponseEntity<List<com.example.timetable.dto.response.ScheduleSummaryResponse>> findAll() {
         return ResponseEntity.ok(scheduleService.findAll());
+    }
+
+    // ===============================
+    // Get Schedule By ID
+    // ===============================
+    @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER','INSTRUCTOR')")
+    @GetMapping("/{id}")
+    public ResponseEntity<ScheduleDTO> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(scheduleService.getScheduleById(id));
     }
 
     // ===============================
@@ -85,12 +99,21 @@ public class ScheduleController {
     // ===============================
     @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER')")
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<byte[]> exportPdf(@PathVariable Long id) {
+    public ResponseEntity<byte[]> exportPdf(
+            @PathVariable Long id,
+            @RequestParam(required = false) YearLevel year,
+            @RequestParam(defaultValue = "NAVY") String theme
+    ) {
 
         var schedule = scheduleService.getScheduleById(id);
+        ColorTheme colorTheme = ColorTheme.fromString(theme);
 
-        byte[] pdf =
-                schedulePdfService.generatePdf(schedule);
+        byte[] pdf;
+        if (year != null) {
+            pdf = schedulePdfService.exportPdf(schedule, year.getDisplayName(), colorTheme);
+        } else {
+            pdf = schedulePdfService.exportPdf(schedule, colorTheme);
+        }
 
         return ResponseEntity.ok()
                 .header(
@@ -101,14 +124,45 @@ public class ScheduleController {
                 .body(pdf);
     }
 
+    // ===============================
+    // Export Schedule PNG
+    // ===============================
     @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER')")
-    @GetMapping("/{id}/excel")
-    public ResponseEntity<byte[]> exportExcel(@PathVariable Long id) {
+    @GetMapping("/{id}/png")
+    public ResponseEntity<byte[]> exportPng(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "NAVY") String theme,
+            @RequestParam(required = false) YearLevel year
+    ) {
 
         var schedule = scheduleService.getScheduleById(id);
+        ColorTheme colorTheme = ColorTheme.fromString(theme);
+
+        String yearLevel = year != null ? year.getDisplayName() : "ALL";
+
+        byte[] png = schedulePngService.generatePng(schedule, yearLevel, colorTheme);
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=schedule-" + id + ".png"
+                )
+                .contentType(MediaType.IMAGE_PNG)
+                .body(png);
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER')")
+    @GetMapping("/{id}/excel")
+    public ResponseEntity<byte[]> exportExcel(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "NAVY") String theme
+    ) {
+
+        var schedule = scheduleService.getScheduleById(id);
+        ColorTheme excelTheme = ColorTheme.fromString(theme);
 
         byte[] excel =
-                scheduleExcelService.generateExcel(schedule);
+                scheduleExcelService.exportExcel(schedule, excelTheme);
 
         return ResponseEntity.ok()
                 .header(
