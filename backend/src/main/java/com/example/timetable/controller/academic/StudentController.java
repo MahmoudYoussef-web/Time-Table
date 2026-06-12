@@ -10,11 +10,12 @@ import com.example.timetable.repository.UserRepository;
 import com.example.timetable.service.DepartmentService;
 import com.example.timetable.service.StudentService;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.Operation;import jakarta.validation.Valid;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,12 +26,13 @@ import java.util.List;
 public class StudentController {
 
     private final StudentService studentService;
-    private final UserRepository userRepository;
     private final DepartmentService departmentService;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @PreAuthorize("hasAnyRole('ADMIN','SCHEDULER','INSTRUCTOR')")
     @GetMapping
-public ResponseEntity<List<StudentResponse>> getAll() {
+    public ResponseEntity<List<StudentResponse>> getAll() {
         return ResponseEntity.ok(
                 studentService.findAll()
                         .stream()
@@ -53,8 +55,15 @@ public ResponseEntity<List<StudentResponse>> getAll() {
     public ResponseEntity<StudentResponse> create(
             @Valid @RequestBody StudentRequest request
     ) {
-        User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new java.util.NoSuchElementException("User not found with id: " + request.userId()));
+        if (userRepository.existsByEmail(request.email())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .build();
+        }
+
+        User user = StudentMapper.toUser(request);
+        user.setPassword(passwordEncoder.encode(request.password()));
+        user = userRepository.save(user);
+
         Department department = departmentService.findById(request.departmentId());
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -74,11 +83,21 @@ public ResponseEntity<List<StudentResponse>> getAll() {
             @Valid @RequestBody StudentRequest request
     ) {
         Student existing = studentService.findById(id);
-        User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new java.util.NoSuchElementException("User not found with id: " + request.userId()));
-        Department department = departmentService.findById(request.departmentId());
+        User user = existing.getUser();
 
-        existing.setUser(user);
+        user.setFullName(request.fullName());
+        if (!user.getEmail().equals(request.email())) {
+            if (userRepository.existsByEmail(request.email())) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            }
+            user.setEmail(request.email());
+        }
+        if (request.password() != null && !request.password().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.password()));
+        }
+        userRepository.save(user);
+
+        Department department = departmentService.findById(request.departmentId());
         existing.setAcademicYear(request.academicYear());
         existing.setLevel(request.level());
         existing.setDepartment(department);
@@ -95,6 +114,3 @@ public ResponseEntity<List<StudentResponse>> getAll() {
         return ResponseEntity.noContent().build();
     }
 }
-
-
-

@@ -172,7 +172,9 @@ export interface Student {
 }
 
 export interface StudentRequest {
-  userId: number;
+  fullName: string;
+  email: string;
+  password?: string;
   academicYear: string;
   level: number;
   departmentId: number;

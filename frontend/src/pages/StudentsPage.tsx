@@ -142,7 +142,8 @@ export function StudentsPage() {
       <Modal isOpen={modalOpen} onClose={closeModal} title={editing ? 'Edit Student' : 'Add Student'}>
         <StudentForm
           defaultValues={editing ? {
-            userId: 0,
+            fullName: editing.fullName,
+            email: editing.email,
             academicYear: editing.academicYear,
             level: editing.level,
             departmentId: departments.find(d => d.name === editing.departmentName)?.id || 0,
@@ -150,6 +151,7 @@ export function StudentsPage() {
           onSubmit={handleSubmit}
           onCancel={closeModal}
           departments={departments}
+          isEditing={!!editing}
         />
       </Modal>
       <ConfirmModal

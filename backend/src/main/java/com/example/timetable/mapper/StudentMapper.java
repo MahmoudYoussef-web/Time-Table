@@ -5,36 +5,33 @@ import com.example.timetable.dto.response.StudentResponse;
 import com.example.timetable.entity.Department;
 import com.example.timetable.entity.Student;
 import com.example.timetable.entity.User;
+import com.example.timetable.entity.enums.UserRole;
 
 public class StudentMapper {
 
-    // Convert request to entity
+    public static User toUser(StudentRequest request) {
+        User user = new User();
+        user.setFullName(request.fullName());
+        user.setEmail(request.email());
+        user.setRole(UserRole.STUDENT);
+        user.setEnabled(true);
+        return user;
+    }
+
     public static Student toEntity(
             StudentRequest request,
             User user,
             Department department
     ) {
-
         Student student = new Student();
-
-        // Set linked user
         student.setUser(user);
-
-        // Set academic year
         student.setAcademicYear(request.academicYear());
-
-        // Set study level
         student.setLevel(request.level());
-
-        // Set department
         student.setDepartment(department);
-
         return student;
     }
 
-    // Convert entity to response
     public static StudentResponse toResponse(Student student) {
-
         return new StudentResponse(
                 student.getId(),
                 student.getUser().getFullName(),
