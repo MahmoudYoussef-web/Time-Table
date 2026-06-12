@@ -53,4 +53,11 @@ public class SemesterController {
                 SemesterMapper.toResponse(semesterService.update(id, request))
         );
     }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        semesterService.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
 }

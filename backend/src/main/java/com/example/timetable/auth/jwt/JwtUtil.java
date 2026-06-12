@@ -2,6 +2,7 @@ package com.example.timetable.auth.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -12,17 +13,23 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret:R4nd0mVeryLongSecretKeyForHS256Algorithm1234567890}")
+    @Value("${jwt.secret}")
     private String secretKey;
 
     @Value("${jwt.expiration:900000}")
     private long expiration;
 
-    private Key getSigningKey() {
-        if (secretKey.length() < 32) {
-            throw new IllegalArgumentException("JWT secret must be at least 32 characters long");
+    @PostConstruct
+    public void init() {
+        if (secretKey == null || secretKey.isBlank()) {
+            throw new IllegalStateException("jwt.secret must be set in environment variables or application properties");
         }
+        if (secretKey.length() < 32) {
+            throw new IllegalStateException("jwt.secret must be at least 32 characters long (got " + secretKey.length() + ")");
+        }
+    }
 
+    private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 

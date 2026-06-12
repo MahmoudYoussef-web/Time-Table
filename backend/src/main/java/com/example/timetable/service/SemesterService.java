@@ -14,4 +14,6 @@ public interface SemesterService {
     Semester save(Semester semester);
 
     Semester update(Long id, SemesterRequest request);
+
+    void deleteById(Long id);
 }

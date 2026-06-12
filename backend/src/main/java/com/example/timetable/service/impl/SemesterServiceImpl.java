@@ -3,12 +3,15 @@ package com.example.timetable.service.impl;
 import com.example.timetable.dto.request.SemesterRequest;
 import com.example.timetable.entity.Semester;
 import com.example.timetable.entity.enums.SemesterStatus;
+import com.example.timetable.repository.ScheduleRepository;
+import com.example.timetable.repository.SectionRepository;
 import com.example.timetable.repository.SemesterRepository;
 import com.example.timetable.service.SemesterService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +25,8 @@ import java.util.NoSuchElementException;
 public class SemesterServiceImpl implements SemesterService {
 
     private final SemesterRepository semesterRepository;
+    private final SectionRepository sectionRepository;
+    private final ScheduleRepository scheduleRepository;
 
     @Override
     public List<Semester> findAll() {
@@ -60,5 +65,25 @@ public class SemesterServiceImpl implements SemesterService {
             existing.setStatus(next);
         }
         return existing;
+    }
+
+    @Override
+    @Transactional
+    public void deleteById(Long id) {
+        Semester semester = findById(id);
+
+        if (!sectionRepository.findBySemesterId(id).isEmpty()) {
+            throw new DataIntegrityViolationException(
+                    "Cannot delete semester with id " + id + ": it has associated sections"
+            );
+        }
+
+        if (scheduleRepository.existsBySemesterId(id)) {
+            throw new DataIntegrityViolationException(
+                    "Cannot delete semester with id " + id + ": it has associated schedules"
+            );
+        }
+
+        semesterRepository.delete(semester);
     }
 }
