@@ -44,24 +44,26 @@ public class ScheduleRenderModel {
             "SATURDAY", "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY"
     );
 
-    private static final String BREAK_THRESHOLD = "12:00";
+    public static final int TITLE_SIZE       = 112;
+    public static final int SUBTITLE_SIZE    = 44;
+    public static final int DATE_SIZE        = 30;
 
-    public static final int TITLE_SIZE = 36;
-    public static final int SUBTITLE_SIZE = 20;
-    public static final int DATE_SIZE = 13;
-    public static final int HEADER_SIZE = 13;
-    public static final int TIME_SIZE = 11;
-    public static final int COURSE_CODE_SIZE = 16;
-    public static final int COURSE_NAME_SIZE = 13;
-    public static final int INSTRUCTOR_SIZE = 12;
-    public static final int ROOM_SIZE = 12;
-    public static final int FOOTER_SIZE = 9;
+    public static final int HEADER_SIZE      = 32;
+    public static final int TIME_SIZE        = 30;
 
-    public static final int HEADER_ROW_HEIGHT = 44;
-    public static final int COURSE_ROW_HEIGHT = 90;
-    public static final int BREAK_ROW_HEIGHT = 40;
+    public static final int COURSE_CODE_SIZE = 44;
+    public static final int COURSE_NAME_SIZE = 28;
+    public static final int INSTRUCTOR_SIZE  = 24;
+    public static final int ROOM_SIZE        = 22;
+    public static final int FOOTER_SIZE      = 20;
 
-    public static final float TIME_COLUMN_PCT = 0.15f;
+    public static final int HEADER_ROW_HEIGHT = 100;
+    public static final int COURSE_ROW_HEIGHT = 210;
+    public static final int BREAK_ROW_HEIGHT  = 70;
+
+    public static final String DIAMOND_SEPARATOR = "\u2666";
+
+    public static final float TIME_COLUMN_PCT = 0.10f;
     public static final float DAY_COLUMN_PCT = (1f - TIME_COLUMN_PCT) / 6f;
 
     public static ScheduleRenderModel forYear(ScheduleDTO schedule, String yearLevel, ColorTheme theme) {
@@ -79,9 +81,18 @@ public class ScheduleRenderModel {
 
     private static List<ScheduleEntryDTO> filterEntriesForYear(List<ScheduleEntryDTO> entries, String yearLevel) {
         if ("ALL".equalsIgnoreCase(yearLevel)) return entries;
+        String display = switch (yearLevel.toUpperCase()) {
+            case "1" -> "First Year";
+            case "2" -> "Second Year";
+            case "3" -> "Third Year";
+            case "4" -> "Fourth Year";
+            default -> yearLevel;
+        };
         return entries.stream()
-                .filter(e -> e.yearLevel() != null
-                        && e.yearLevel().toUpperCase().startsWith(yearLevel.toUpperCase()))
+                .filter(e -> e.yearLevel() != null && (
+                        e.yearLevel().equalsIgnoreCase(display) ||
+                        e.yearLevel().equalsIgnoreCase(yearLevel)
+                ))
                 .toList();
     }
 
@@ -94,7 +105,7 @@ public class ScheduleRenderModel {
         try {
             String t = time24.length() == 4 ? "0" + time24 : time24;
             return java.time.LocalTime.parse(t)
-                    .format(java.time.format.DateTimeFormatter.ofPattern("h:mm a"));
+                    .format(java.time.format.DateTimeFormatter.ofPattern("hh:mm a"));
         } catch (Exception e) {
             return time24;
         }
@@ -120,8 +131,7 @@ public class ScheduleRenderModel {
 
             Map<String, Map<String, SlotDTO>> dataMap = buildDataMap(weekly);
             List<String> timeSlots = extractTimeSlotsFromDataMap(dataMap);
-            String breakTime = findBreakTime(timeSlots);
-            List<RowDef> rows = buildRows(dataMap, timeSlots, breakTime);
+            List<RowDef> rows = buildRows(dataMap, timeSlots);
             String subtitle = level + " \u2014 Semester: "
                     + (schedule.getSemesterName() != null ? schedule.getSemesterName() : "N/A");
 
@@ -150,7 +160,6 @@ public class ScheduleRenderModel {
         }
 
         List<String> timeSlots = extractTimeSlots(entries);
-        String breakTime = findBreakTime(timeSlots);
 
         Map<String, Map<String, SlotDTO>> dataMap = new LinkedHashMap<>();
         for (String day : DAYS) {
@@ -161,12 +170,12 @@ public class ScheduleRenderModel {
             }
             for (String time : timeSlots) {
                 ScheduleEntryDTO entry = seen.get(time);
-                slotMap.put(time, entry != null ? new SlotDTO(time, calcEndTime(time), entry) : null);
+                slotMap.put(time, entry != null ? new SlotDTO(time, entry.endTime(), entry) : null);
             }
             dataMap.put(day, slotMap);
         }
 
-        List<RowDef> rows = buildRows(dataMap, timeSlots, breakTime);
+        List<RowDef> rows = buildRows(dataMap, timeSlots);
         String subtitle = displayName + " \u2014 Semester: "
                 + (schedule.getSemesterName() != null ? schedule.getSemesterName() : "N/A");
 
@@ -215,37 +224,44 @@ public class ScheduleRenderModel {
     }
 
     private static List<RowDef> buildRows(Map<String, Map<String, SlotDTO>> dataMap,
-                                          List<String> timeSlots,
-                                          String breakTime) {
+                                          List<String> timeSlots) {
         List<RowDef> rows = new ArrayList<>();
 
         for (int i = 0; i < timeSlots.size(); i++) {
             String timeKey = timeSlots.get(i);
-            boolean isBreak = timeKey.equals(breakTime);
 
-            if (isBreak) {
-                RowDef breakRow = new RowDef(RowType.BREAK, BREAK_ROW_HEIGHT);
-                breakRow.setTimeLabel(formatAmPm(timeKey));
-                breakRow.setTimeSubLabel("\u2013 " + formatAmPm(calcEndTime(timeKey)));
-                rows.add(breakRow);
-                continue;
+            String endTime = getEndTime(dataMap, timeKey);
+
+            if (i > 0) {
+                String prevEnd = getEndTime(dataMap, timeSlots.get(i - 1));
+                try {
+                    String currStart = timeKey.length() == 4 ? "0" + timeKey : timeKey;
+                    java.time.LocalTime end = java.time.LocalTime.parse(prevEnd);
+                    java.time.LocalTime start = java.time.LocalTime.parse(currStart);
+                    long gap = java.time.Duration.between(end, start).toMinutes();
+                    if (gap >= 30) {
+                        RowDef breakRow = new RowDef(RowType.BREAK, BREAK_ROW_HEIGHT);
+                        breakRow.setTimeLabel(formatAmPm(end.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))));
+                        breakRow.setTimeSubLabel("\u2013 " + formatAmPm(start.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))));
+                        rows.add(breakRow);
+                    }
+                } catch (Exception e) { /* ignore parse errors */ }
             }
 
             RowDef courseRow = new RowDef(RowType.COURSE, COURSE_ROW_HEIGHT);
             courseRow.setTimeLabel(formatAmPm(timeKey));
-            courseRow.setTimeSubLabel("\u2013 " + formatAmPm(calcEndTime(timeKey)));
+            courseRow.setTimeSubLabel("\u2013 " + formatAmPm(endTime));
             courseRow.setIndex(i);
 
             for (String day : DAYS) {
                 SlotDTO slot = dataMap.getOrDefault(day, Map.of()).get(timeKey);
                 if (slot != null && slot.entry() != null) {
                     ScheduleEntryDTO e = slot.entry();
-                    String roomLabel = "LAB".equalsIgnoreCase(e.sessionType()) ? "Lab: " : "Rm: ";
                     courseRow.getCells().add(new CellContent(
                             e.courseCode(),
                             e.courseName(),
                             e.instructorName(),
-                            roomLabel + e.roomNumber(),
+                            e.roomNumber(),
                             e.sessionType() != null ? e.sessionType() : "LECTURE",
                             false,
                             e.hardViolations() > 0
@@ -276,13 +292,13 @@ public class ScheduleRenderModel {
                 .toList();
     }
 
-    private static String findBreakTime(List<String> timeSlots) {
-        for (String time : timeSlots) {
-            if (time.compareTo(BREAK_THRESHOLD) >= 0) {
-                return time;
-            }
-        }
-        return null;
+    private static String getEndTime(Map<String, Map<String, SlotDTO>> dataMap, String timeKey) {
+        return dataMap.values().stream()
+                .flatMap(m -> m.entrySet().stream())
+                .filter(e -> e.getKey().equals(timeKey) && e.getValue() != null && e.getValue().endTime() != null)
+                .map(e -> e.getValue().endTime())
+                .findFirst()
+                .orElse(calcEndTime(timeKey));
     }
 
     public enum RowType { HEADER, COURSE, BREAK }
@@ -356,6 +372,7 @@ public class ScheduleRenderModel {
         public String getSessionType() { return sessionType; }
         public boolean isEmpty() { return empty; }
         public boolean hasConflict() { return conflict; }
+        public CourseCategory getCategory() { return CourseCategory.fromCode(courseCode); }
     }
 
     private static class Builder {

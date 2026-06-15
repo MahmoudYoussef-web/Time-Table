@@ -40,7 +40,7 @@ export function StudentForm({ defaultValues, onSubmit, onCancel, departments, is
   type FormData = z.infer<typeof schema>;
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues,
   });
 

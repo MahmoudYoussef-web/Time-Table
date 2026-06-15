@@ -5,6 +5,7 @@ import com.example.timetable.mapper.WeeklyScheduleMapper;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +36,15 @@ public class ScheduleExcelService {
 
     private static final java.awt.Color WHITE = java.awt.Color.WHITE;
     private static final java.awt.Color ROW_EVEN_BG = new java.awt.Color(249, 250, 251);
+
+    private static java.awt.Color toAwt(String hex) {
+        String h = hex.replace("#", "");
+        return new java.awt.Color(
+                Integer.parseInt(h.substring(0, 2), 16),
+                Integer.parseInt(h.substring(2, 4), 16),
+                Integer.parseInt(h.substring(4, 6), 16)
+        );
+    }
 
     public byte[] exportExcel(ScheduleDTO schedule, ColorTheme theme) {
         return generateExcel(schedule, theme);
@@ -81,6 +91,8 @@ public class ScheduleExcelService {
             CellStyle entryEvenStyle = createEntryStyle(workbook, ROW_EVEN_BG, textColor);
             CellStyle entryOddStyle = createEntryStyle(workbook, WHITE, textColor);
             CellStyle timeStyle = createTimeStyle(workbook, isNavy);
+
+            Map<java.awt.Color, CellStyle> categoryStyleCache = new java.util.HashMap<>();
 
             for (String level : ORDERED_LEVELS) {
                 WeeklyScheduleDTO weekly = levelTables.get(level);
@@ -152,7 +164,7 @@ public class ScheduleExcelService {
                             String line1 = e.courseCode();
                             String line2 = e.courseName();
                             String line3 = e.instructorName();
-                            String line4 = "Rm: " + e.roomNumber();
+                            String line4 = "\u25CF " + e.roomNumber();
                             String full = line1 + "\n" + line2 + "\n" + line3 + "\n" + line4;
 
                             RichTextString rts = workbook.getCreationHelper().createRichTextString(full);
@@ -162,14 +174,30 @@ public class ScheduleExcelService {
                             rts.applyFont(afterLine2, afterLine2 + line3.length(), normalFont);
                             rts.applyFont(afterLine2 + line3.length() + 1, full.length(), smallFont);
                             cell.setCellValue(rts);
+
+                            java.awt.Color catBg = toAwt(CourseCategory.fromCode(e.courseCode()).bgHex);
+                            CellStyle catStyle = categoryStyleCache.computeIfAbsent(catBg,
+                                    bg -> createEntryStyle(workbook, bg, textColor));
+                            cell.setCellStyle(catStyle);
+                        } else {
+                            cell.setCellStyle(entryStyle);
                         }
-                        cell.setCellStyle(entryStyle);
                     }
                 }
 
-                for (int i = 0; i < 7; i++) {
-                    sheet.autoSizeColumn(i);
+                sheet.setColumnWidth(0, 3000);
+                for (int i = 1; i <= 6; i++) {
+                    sheet.setColumnWidth(i, 6500);
                 }
+
+                java.awt.Color tabColor = switch (level) {
+                    case "First Year"  -> new java.awt.Color(46, 125, 50);
+                    case "Second Year" -> new java.awt.Color(21, 101, 192);
+                    case "Third Year"  -> new java.awt.Color(106, 27, 154);
+                    case "Fourth Year" -> new java.awt.Color(230, 81, 0);
+                    default -> isNavy ? NAVY_HEADER_BG : BW_HEADER_BG;
+                };
+                ((XSSFSheet) sheet).setTabColor(new XSSFColor(tabColor, null));
             }
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();

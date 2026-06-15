@@ -1,0 +1,13 @@
+#!/bin/sh
+MAVEN_PROJECTBASEDIR="$(cd "$(dirname "$0")" && pwd)"
+WRAPPER_JAR="$MAVEN_PROJECTBASEDIR/.mvn/wrapper/maven-wrapper.jar"
+if [ -z "$JAVA_HOME" ]; then
+    if [ -d "$HOME/.jdks/ms-21.0.9" ]; then
+        JAVA_HOME="$HOME/.jdks/ms-21.0.9"
+    elif [ -d "/c/Program Files/Java/jdk-21" ]; then
+        JAVA_HOME="/c/Program Files/Java/jdk-21"
+    fi
+fi
+JAVA_EXE="$JAVA_HOME/bin/java"
+[ -f "$WRAPPER_JAR" ] || { echo "Maven wrapper JAR not found" 1>&2; exit 1; }
+exec "$JAVA_EXE" $MAVEN_OPTS -classpath "$WRAPPER_JAR" "-Dmaven.multiModuleProjectDirectory=$MAVEN_PROJECTBASEDIR" org.apache.maven.wrapper.MavenWrapperMain "$@"

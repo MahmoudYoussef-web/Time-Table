@@ -101,7 +101,7 @@ public class ScheduleController {
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> exportPdf(
             @PathVariable Long id,
-            @RequestParam(required = false) YearLevel year,
+            @RequestParam(required = false) String year,
             @RequestParam(defaultValue = "NAVY") String theme
     ) {
 
@@ -110,7 +110,7 @@ public class ScheduleController {
 
         byte[] pdf;
         if (year != null) {
-            pdf = schedulePdfService.exportPdf(schedule, year.getDisplayName(), colorTheme);
+            pdf = schedulePdfService.exportPdf(schedule, year, colorTheme);
         } else {
             pdf = schedulePdfService.exportPdf(schedule, colorTheme);
         }
@@ -132,13 +132,14 @@ public class ScheduleController {
     public ResponseEntity<byte[]> exportPng(
             @PathVariable Long id,
             @RequestParam(defaultValue = "NAVY") String theme,
-            @RequestParam(required = false) YearLevel year
+            @RequestParam(required = false) String year
     ) {
 
         var schedule = scheduleService.getScheduleById(id);
         ColorTheme colorTheme = ColorTheme.fromString(theme);
 
-        String yearLevel = year != null ? year.getDisplayName() : "ALL";
+        String yearLevel = year;
+        if (yearLevel == null) yearLevel = "ALL";
 
         byte[] png = schedulePngService.generatePng(schedule, yearLevel, colorTheme);
 

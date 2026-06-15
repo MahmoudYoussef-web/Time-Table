@@ -23,7 +23,7 @@ interface EnrollmentFormProps {
 
 export function EnrollmentForm({ defaultValues, onSubmit, onCancel, students, sections }: EnrollmentFormProps) {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues,
   });
 
