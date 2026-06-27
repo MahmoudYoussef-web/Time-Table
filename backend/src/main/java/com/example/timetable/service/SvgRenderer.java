@@ -24,14 +24,13 @@ public class SvgRenderer {
     @PostConstruct
     void warmup() {
         try {
-            render("assets/university_shield_navy.svg",   400, 400);
-            render("assets/university_shield_black.svg",  400, 400);
-            render("assets/university_building_navy.svg", 920, 424);
-            render("assets/university_building_black.svg",852, 424);
-            render("assets/divider_navy.svg",  700, 40);
-            render("assets/divider_black.svg", 700, 40);
+            render("assets/university_shield_navy.svg",   270, 270);
+            render("assets/university_shield_black.svg",  270, 270);
+            render("assets/university_building_navy.svg", 580, 230);
+            render("assets/university_building_black.svg",610, 230);
             render("assets/pin_icon.svg",      44, 44);
             render("assets/coffee_icon.svg",   36, 36);
+            render("assets/calendar_icon.svg", 30, 30);
         } catch (Exception e) {
             // log
         }

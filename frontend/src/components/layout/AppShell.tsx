@@ -14,7 +14,6 @@ const pageTitles: Record<string, string> = {
   '/semesters': 'Semesters',
   '/timeslots': 'Time Slots',
   '/generate': 'Schedule Generator',
-  '/students': 'Students',
   '/analytics': 'Analytics',
   '/settings': 'Settings',
 };

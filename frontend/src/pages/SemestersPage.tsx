@@ -6,6 +6,7 @@ import * as semestersApi from '../api/semesters';
 import { Table } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { EmptyState } from '../components/ui/EmptyState';
 import { StatusBadge } from '../components/ui/Badge';
 import { SemesterForm } from '../components/forms/SemesterForm';
@@ -16,10 +17,16 @@ export function SemestersPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Semester | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchData = async () => {
     try { setSemesters(await semestersApi.getSemesters()); }
-    catch { toast.error('Failed to load semesters'); }
+    catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to load semesters';
+      console.error('Load semesters error:', err?.response?.data || err);
+      toast.error(msg);
+    }
     finally { setLoading(false); }
   };
 
@@ -40,7 +47,28 @@ export function SemestersPage() {
       }
       closeModal();
       fetchData();
-    } catch { toast.error('Failed to save semester'); }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to save semester';
+      console.error('Save semester error:', err?.response?.data || err);
+      toast.error(msg);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTargetId) return;
+    setDeleting(true);
+    try {
+      await semestersApi.deleteSemester(deleteTargetId);
+      toast.success('Semester deleted');
+      fetchData();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to delete semester';
+      console.error('Delete semester error:', err?.response?.data || err);
+      toast.error(msg);
+    } finally {
+      setDeleting(false);
+      setDeleteTargetId(null);
+    }
   };
 
   if (loading) return <div className="h-32 bg-[--muted] rounded animate-pulse" />;
@@ -69,6 +97,7 @@ export function SemestersPage() {
           ]}
           data={semesters}
           onEdit={openEdit}
+          onDelete={(s) => setDeleteTargetId(s.id)}
           loading={loading}
         />
       )}
@@ -79,6 +108,15 @@ export function SemestersPage() {
           onCancel={closeModal}
         />
       </Modal>
+
+      <ConfirmModal
+        isOpen={deleteTargetId !== null}
+        title="Delete Semester"
+        message="Are you sure? This action cannot be undone."
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTargetId(null)}
+        loading={deleting}
+      />
     </div>
   );
 }

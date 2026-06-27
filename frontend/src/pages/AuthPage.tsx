@@ -51,7 +51,11 @@ export function AuthPage() {
       loginStore(res.token, res.user);
       toast.success('Welcome back!');
       navigate('/dashboard');
-    } catch { setError('Sign in failed. Check your credentials.'); }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Network error. Is the backend running?';
+      console.error('Sign in error:', err?.response?.data || err);
+      setError(msg);
+    }
     finally { setLoading(false); }
   };
 
@@ -64,7 +68,11 @@ export function AuthPage() {
       loginStore(res.token, res.user);
       toast.success('Account created!');
       navigate('/dashboard');
-    } catch { setError('Registration failed.'); }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Network error. Is the backend running?';
+      console.error('Sign up error:', err?.response?.data || err);
+      setError(msg);
+    }
     finally { setLoading(false); }
   };
 

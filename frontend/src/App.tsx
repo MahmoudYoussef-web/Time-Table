@@ -14,8 +14,6 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ de
 const CoursesPage = lazy(() => import('./pages/CoursesPage').then(m => ({ default: m.CoursesPage })));
 const LecturersPage = lazy(() => import('./pages/LecturersPage').then(m => ({ default: m.LecturersPage })));
 const RoomsPage = lazy(() => import('./pages/RoomsPage').then(m => ({ default: m.RoomsPage })));
-const StudentsPage = lazy(() => import('./pages/StudentsPage').then(m => ({ default: m.StudentsPage })));
-const EnrollmentsPage = lazy(() => import('./pages/EnrollmentsPage').then(m => ({ default: m.EnrollmentsPage })));
 const SchedulesPage = lazy(() => import('./pages/SchedulesPage').then(m => ({ default: m.SchedulesPage })));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
@@ -90,8 +88,6 @@ function AppRoutes() {
           <Route path="/courses" element={<Suspense fallback={<PageLoading />}><RoleGuard allowedRoles={ADMIN_SCHEDULER}><AnimatedPage><CoursesPage /></AnimatedPage></RoleGuard></Suspense>} />
           <Route path="/lecturers" element={<Suspense fallback={<PageLoading />}><RoleGuard allowedRoles={ADMIN_SCHEDULER}><AnimatedPage><LecturersPage /></AnimatedPage></RoleGuard></Suspense>} />
           <Route path="/rooms" element={<Suspense fallback={<PageLoading />}><RoleGuard allowedRoles={ADMIN_SCHEDULER}><AnimatedPage><RoomsPage /></AnimatedPage></RoleGuard></Suspense>} />
-          <Route path="/students" element={<Suspense fallback={<PageLoading />}><RoleGuard allowedRoles={ADMIN_SCHEDULER}><AnimatedPage><StudentsPage /></AnimatedPage></RoleGuard></Suspense>} />
-          <Route path="/enrollments" element={<Suspense fallback={<PageLoading />}><RoleGuard allowedRoles={ADMIN_SCHEDULER}><AnimatedPage><EnrollmentsPage /></AnimatedPage></RoleGuard></Suspense>} />
           <Route path="/schedules" element={<Suspense fallback={<PageLoading />}><RoleGuard allowedRoles={ADMIN_SCHEDULER}><AnimatedPage><SchedulesPage /></AnimatedPage></RoleGuard></Suspense>} />
           <Route path="/analytics" element={<Suspense fallback={<PageLoading />}><RoleGuard allowedRoles={ALL_ROLES}><AnimatedPage><AnalyticsPage /></AnimatedPage></RoleGuard></Suspense>} />
           <Route path="/settings" element={<Suspense fallback={<PageLoading />}><RoleGuard allowedRoles={ALL_ROLES}><AnimatedPage><SettingsPage /></AnimatedPage></RoleGuard></Suspense>} />

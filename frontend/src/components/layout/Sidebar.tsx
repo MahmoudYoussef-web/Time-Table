@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, BookOpen, Users, DoorOpen,
-  Zap, Clock, Building2, Layers, LogOut, GraduationCap, List, Calendar,
+  Zap, Clock, Building2, Layers, LogOut, List, Calendar,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useScheduleStore } from '../../store/scheduleStore';
@@ -17,8 +17,6 @@ const navItems: NavItem[] = [
   { icon: Layers,       label: 'Sections',     to: '/sections',   roles: ['ADMIN', 'SCHEDULER'] },
   { icon: Clock,        label: 'Semesters',    to: '/semesters',  roles: ['ADMIN', 'SCHEDULER'] },
   { icon: Clock,        label: 'Time Slots',   to: '/timeslots',  roles: ['ADMIN', 'SCHEDULER'] },
-  { icon: Users,        label: 'Students',     to: '/students',   roles: ['ADMIN', 'SCHEDULER'] },
-  { icon: GraduationCap,label: 'Enrollments',  to: '/enrollments',roles: ['ADMIN', 'SCHEDULER'] },
   { icon: Zap,          label: 'Generate',     to: '/generate',   roles: ['ADMIN', 'SCHEDULER'] },
   { icon: List,         label: 'Schedule History', to: '/schedules', roles: ['ADMIN', 'SCHEDULER'] },
   { icon: Calendar,     label: 'Weekly View',  to: '',            roles: ['ADMIN', 'SCHEDULER'], dynamic: true },

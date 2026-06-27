@@ -44,22 +44,22 @@ public class ScheduleRenderModel {
             "SATURDAY", "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY"
     );
 
-    public static final int TITLE_SIZE       = 112;
-    public static final int SUBTITLE_SIZE    = 44;
-    public static final int DATE_SIZE        = 30;
+    public static final int TITLE_SIZE       = 86;
+    public static final int SUBTITLE_SIZE    = 34;
+    public static final int DATE_SIZE        = 24;
 
     public static final int HEADER_SIZE      = 32;
-    public static final int TIME_SIZE        = 30;
+    public static final int TIME_SIZE        = 36;
 
     public static final int COURSE_CODE_SIZE = 44;
     public static final int COURSE_NAME_SIZE = 28;
     public static final int INSTRUCTOR_SIZE  = 24;
     public static final int ROOM_SIZE        = 22;
-    public static final int FOOTER_SIZE      = 20;
+    public static final int FOOTER_SIZE      = 16;
 
-    public static final int HEADER_ROW_HEIGHT = 100;
+    public static final int HEADER_ROW_HEIGHT = 108;
     public static final int COURSE_ROW_HEIGHT = 210;
-    public static final int BREAK_ROW_HEIGHT  = 70;
+    public static final int BREAK_ROW_HEIGHT  = 100;
 
     public static final String DIAMOND_SEPARATOR = "\u2666";
 

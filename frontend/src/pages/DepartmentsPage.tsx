@@ -22,7 +22,11 @@ export function DepartmentsPage() {
     try {
       const d = await departmentsApi.getDepartments();
       setDepartments(d);
-    } catch { toast.error('Failed to load departments'); }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to load departments';
+      console.error('Load departments error:', err?.response?.data || err);
+      toast.error(msg);
+    }
     finally { setLoading(false); }
   };
 
@@ -43,7 +47,11 @@ export function DepartmentsPage() {
       }
       closeModal();
       fetchData();
-    } catch { toast.error('Failed to save department'); }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to save department';
+      console.error('Save department error:', err?.response?.data || err);
+      toast.error(msg);
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -53,7 +61,11 @@ export function DepartmentsPage() {
       await departmentsApi.deleteDepartment(deleteTargetId);
       toast.success('Department deleted');
       fetchData();
-    } catch { toast.error('Failed to delete department'); }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to delete department';
+      console.error('Delete department error:', err?.response?.data || err);
+      toast.error(msg);
+    }
     finally { setDeleting(false); setDeleteTargetId(null); }
   };
 

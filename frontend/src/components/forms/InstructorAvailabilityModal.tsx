@@ -30,8 +30,10 @@ export function InstructorAvailabilityModal({ instructor, isOpen, onClose }: Ins
     ]).then(([slots, unavailable]) => {
       setAllSlots(slots);
       setUnavailableIds(new Set(unavailable.map(s => s.id)));
-    }).catch(() => {
-      toast.error('Failed to load availability data');
+    }).catch((err: any) => {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to load availability data';
+      console.error('Load availability error:', err?.response?.data || err);
+      toast.error(msg);
     }).finally(() => setLoading(false));
   }, [isOpen, instructor.id]);
 
@@ -47,8 +49,10 @@ export function InstructorAvailabilityModal({ instructor, isOpen, onClose }: Ins
         setUnavailableIds(prev => new Set(prev).add(slotId));
         toast.success('Slot marked unavailable');
       }
-    } catch {
-      toast.error('Failed to update availability');
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to update availability';
+      console.error('Update availability error:', err?.response?.data || err);
+      toast.error(msg);
     } finally {
       setToggling(null);
     }

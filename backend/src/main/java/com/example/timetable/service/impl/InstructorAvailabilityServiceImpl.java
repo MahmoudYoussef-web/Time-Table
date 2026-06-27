@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
+
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -24,6 +26,7 @@ public class InstructorAvailabilityServiceImpl implements InstructorAvailability
     private final SecurityService securityService;
 
     @Override
+    @Transactional(readOnly = true)
     public List<TimeSlotResponse> getUnavailableSlots(Long instructorId) {
         Instructor instructor = instructorRepository.findById(instructorId)
                 .orElseThrow(() -> new NoSuchElementException("Instructor not found with id: " + instructorId));

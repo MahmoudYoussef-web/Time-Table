@@ -7,8 +7,8 @@ import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
 
 const schema = z.object({
-  code:         z.string().min(1, 'Code is required'),
-  name:         z.string().min(1, 'Name is required'),
+  code:         z.string().trim().min(1, 'Code is required'),
+  name:         z.string().trim().min(1, 'Name is required'),
   creditHours:  z.number().min(1).max(6),
   departmentId: z.number().min(1, 'Select a department'),
 });

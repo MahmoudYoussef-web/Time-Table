@@ -6,8 +6,8 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 
 const schema = z.object({
-  code: z.string().min(1, 'Code is required'),
-  name: z.string().min(1, 'Name is required'),
+  code: z.string().trim().min(1, 'Code is required'),
+  name: z.string().trim().min(1, 'Name is required'),
 });
 
 type FormData = z.infer<typeof schema>;

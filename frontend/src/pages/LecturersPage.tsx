@@ -39,8 +39,10 @@ export function LecturersPage() {
       const [l, d] = await Promise.all([instructorsApi.getInstructors(), departmentsApi.getDepartments()]);
       setLecturers(l);
       setDepartments(d.map(d => ({ id: d.id, name: d.name })));
-    } catch {
-      toast.error('Failed to load lecturers');
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to load lecturers';
+      console.error('Load lecturers error:', err?.response?.data || err);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -64,8 +66,10 @@ export function LecturersPage() {
       }
       closeModal();
       fetchData();
-    } catch {
-      toast.error('Failed to save lecturer');
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to save lecturer';
+      console.error('Save lecturer error:', err?.response?.data || err);
+      toast.error(msg);
     }
   };
 
@@ -76,8 +80,10 @@ export function LecturersPage() {
       await instructorsApi.deleteInstructor(deleteTargetId);
       toast.success('Lecturer deleted');
       fetchData();
-    } catch {
-      toast.error('Failed to delete lecturer');
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to delete lecturer';
+      console.error('Delete lecturer error:', err?.response?.data || err);
+      toast.error(msg);
     } finally {
       setDeleting(false);
       setDeleteTargetId(null);

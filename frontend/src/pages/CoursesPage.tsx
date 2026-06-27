@@ -26,8 +26,10 @@ export function CoursesPage() {
       const [c, d] = await Promise.all([getCourses(), departmentsApi.getDepartments()]);
       setCourses(c);
       setDepartments(d.map(d => ({ id: d.id, name: d.name })));
-    } catch {
-      toast.error('Failed to load courses');
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to load courses';
+      console.error('Load courses error:', err?.response?.data || err);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -50,8 +52,10 @@ export function CoursesPage() {
       }
       closeModal();
       fetchData();
-    } catch {
-      toast.error('Failed to save course');
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to save course';
+      console.error('Save course error:', err?.response?.data || err);
+      toast.error(msg);
     }
   };
 
@@ -62,8 +66,10 @@ export function CoursesPage() {
       await deleteCourse(deleteTargetId);
       toast.success('Course deleted');
       fetchData();
-    } catch {
-      toast.error('Failed to delete course');
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to delete course';
+      console.error('Delete course error:', err?.response?.data || err);
+      toast.error(msg);
     } finally {
       setDeleting(false);
       setDeleteTargetId(null);

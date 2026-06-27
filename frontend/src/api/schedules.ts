@@ -13,7 +13,7 @@ export const deleteSchedule = (id: number) =>
 
 export const generateSchedule = (semesterId: number): Promise<string> =>
   client.post<string>(`/schedules/generate/${semesterId}`, null, {
-    headers: { Accept: 'text/plain' }
+    headers: { Accept: 'application/json' }
   }).then(r => r.data);
 
 export const validateSchedule = (id: number) =>
@@ -43,9 +43,8 @@ export const downloadPdf = async (
   theme: 'NAVY' | 'BLACK' = 'NAVY',
   year?: string
 ) => {
-  const params = new URLSearchParams({ scheduleId: String(scheduleId), theme });
-  if (year) params.set('year', year);
-  const response = await client.get(`/export/pdf?${params}`, { responseType: 'blob' });
+  const url = `/schedules/${scheduleId}/pdf?theme=${theme}${year ? '&year=' + year : ''}`;
+  const response = await client.get(url, { responseType: 'blob' });
   const filename = `schedule-${scheduleId}${year ? '-' + year.toLowerCase() : ''}.pdf`;
   triggerDownload(response.data, filename);
 };
@@ -54,8 +53,8 @@ export const downloadExcel = async (
   scheduleId: number,
   theme: 'NAVY' | 'BLACK' = 'NAVY'
 ) => {
-  const params = new URLSearchParams({ scheduleId: String(scheduleId), theme });
-  const response = await client.get(`/export/excel?${params}`, { responseType: 'blob' });
+  const url = `/schedules/${scheduleId}/excel?theme=${theme}`;
+  const response = await client.get(url, { responseType: 'blob' });
   const filename = `schedule-${scheduleId}.xlsx`;
   triggerDownload(response.data, filename);
 };
@@ -65,9 +64,8 @@ export const downloadPng = async (
   theme: 'NAVY' | 'BLACK' = 'NAVY',
   year?: string
 ) => {
-  const params = new URLSearchParams({ scheduleId: String(scheduleId), theme });
-  if (year) params.set('year', year);
-  const response = await client.get(`/export/png?${params}`, { responseType: 'blob' });
+  const url = `/schedules/${scheduleId}/png?theme=${theme}${year ? '&year=' + year : ''}`;
+  const response = await client.get(url, { responseType: 'blob' });
   const filename = `schedule-${scheduleId}${year ? '-' + year.toLowerCase() : ''}.png`;
   triggerDownload(response.data, filename);
 };
