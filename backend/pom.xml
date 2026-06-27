@@ -108,11 +108,11 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- H2 Database -->
+        <!-- H2 Database (test only) -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
 
         <!-- Playwright (HTML to PNG via Chromium) -->

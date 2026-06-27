@@ -4,6 +4,7 @@ import com.example.timetable.entity.Schedule;
 import com.example.timetable.entity.Semester;
 import com.example.timetable.entity.enums.ScheduleStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -24,6 +25,8 @@ public interface ScheduleRepository
     Optional<Schedule> findTopByStatusOrderByCreatedAtDesc(
             ScheduleStatus status);
 
+    List<Schedule> findBySemesterId(Long semesterId);
+
     boolean existsBySemesterId(Long semesterId);
 
     boolean existsBySemesterIdAndStatus(
@@ -33,6 +36,9 @@ public interface ScheduleRepository
     List<Schedule> findBySemesterIdAndStatus(
             Long semesterId,
             ScheduleStatus status);
+
+    @Query("SELECT COUNT(se) FROM ScheduleEntry se WHERE se.schedule.semester.id = :semesterId")
+    long countEntriesBySemesterId(@Param("semesterId") Long semesterId);
 
     @Query("""
         SELECT s FROM Schedule s
@@ -53,4 +59,12 @@ public interface ScheduleRepository
 
     @Query("SELECT COALESCE(SUM(s.hardViolations), 0) FROM Schedule s")
     Long sumHardViolations();
+
+    @Modifying
+    @Query(value = "DELETE FROM schedule_entries WHERE schedule_id IN (SELECT id FROM schedules WHERE semester_id = :semesterId)", nativeQuery = true)
+    void deleteEntriesBySemesterId(@Param("semesterId") Long semesterId);
+
+    @Modifying
+    @Query(value = "DELETE FROM schedules WHERE semester_id = :semesterId", nativeQuery = true)
+    void deleteBySemesterId(@Param("semesterId") Long semesterId);
 }

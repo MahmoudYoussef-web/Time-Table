@@ -5,6 +5,8 @@ import com.example.timetable.service.ScheduleRenderModel.*;
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.ScreenshotType;
 import com.microsoft.playwright.options.WaitUntilState;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -18,8 +20,31 @@ public class SchedulePngService {
 
     private final SvgRenderer svgRenderer;
 
+    private Playwright playwright;
+    private Browser browser;
+
     public SchedulePngService(SvgRenderer svgRenderer) {
         this.svgRenderer = svgRenderer;
+    }
+
+    @PostConstruct
+    public void init() {
+        playwright = Playwright.create();
+        BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions()
+                .setHeadless(true)
+                .setArgs(List.of(
+                        "--no-sandbox",
+                        "--disable-setuid-sandbox",
+                        "--disable-dev-shm-usage",
+                        "--force-device-scale-factor=1"
+                ));
+        browser = playwright.chromium().launch(launchOptions);
+    }
+
+    @PreDestroy
+    public void cleanup() {
+        if (browser != null) browser.close();
+        if (playwright != null) playwright.close();
     }
 
     public byte[] generatePng(ScheduleDTO schedule, String yearLevel, ColorTheme theme) {
@@ -44,36 +69,19 @@ public class SchedulePngService {
     }
 
     private byte[] renderHtmlToPng(String html) {
-        try (Playwright playwright = Playwright.create()) {
-            BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions()
-                    .setHeadless(true)
-                    .setArgs(List.of(
-                            "--no-sandbox",
-                            "--disable-setuid-sandbox",
-                            "--disable-dev-shm-usage",
-                            "--force-device-scale-factor=1"
-                    ));
-
-            try (Browser browser = playwright.chromium().launch(launchOptions)) {
-                Browser.NewContextOptions contextOptions = new Browser.NewContextOptions()
+        try (BrowserContext context = browser.newContext(
+                new Browser.NewContextOptions()
                         .setViewportSize(TARGET_WIDTH_PX, 1080)
-                        .setDeviceScaleFactor(1.0);
+                        .setDeviceScaleFactor(1.0)
+        )) {
+            Page page = context.newPage();
 
-                try (BrowserContext context = browser.newContext(contextOptions)) {
-                    Page page = context.newPage();
+            page.setContent(html, new Page.SetContentOptions()
+                    .setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 
-                    page.setContent(html, new Page.SetContentOptions()
-                            .setWaitUntil(WaitUntilState.NETWORKIDLE));
-
-                    page.waitForTimeout(800);
-
-                    byte[] screenshot = page.screenshot(new Page.ScreenshotOptions()
-                            .setFullPage(true)
-                            .setType(ScreenshotType.PNG));
-
-                    return screenshot;
-                }
-            }
+            return page.screenshot(new Page.ScreenshotOptions()
+                    .setFullPage(true)
+                    .setType(ScreenshotType.PNG));
         } catch (Exception e) {
             throw new RuntimeException("Failed to render PNG with Playwright", e);
         }
@@ -83,61 +91,68 @@ public class SchedulePngService {
         String file = theme == ColorTheme.NAVY
                 ? "assets/university_shield_navy.svg"
                 : "assets/university_shield_black.svg";
-        return svgRenderer.renderToBase64(file, 400, 400);
+        return svgRenderer.renderToBase64(file, 270, 270);
     }
 
     private String buildingBase64(ColorTheme theme) {
         String file = theme == ColorTheme.NAVY
                 ? "assets/university_building_navy.svg"
                 : "assets/university_building_black.svg";
-        int w = theme == ColorTheme.NAVY ? 920 : 852;
-        return svgRenderer.renderToBase64(file, w, 424);
+        boolean isNavy = theme == ColorTheme.NAVY;
+        int w = isNavy ? 820 : 940;
+        int h = buildingH(isNavy);
+        return svgRenderer.renderToBase64(file, w, h);
+    }
+
+    private static int buildingH(boolean isNavy) {
+        return isNavy ? 325 : 370;
     }
 
     private String dividerBase64(ColorTheme theme) {
         String file = theme == ColorTheme.NAVY
                 ? "assets/divider_navy.svg"
                 : "assets/divider_black.svg";
-        return svgRenderer.renderToBase64(file, 700, 40);
+        return svgRenderer.renderToBase64(file, 380, 24);
     }
 
     private String buildHtml(ScheduleRenderModel model) {
         boolean isNavy = model.getTheme() == ColorTheme.NAVY;
         String titleColor    = isNavy ? "#0B1B4F" : "#000000";
-        String headerBg      = isNavy ? "#13387a" : "#000000";
+        String headerBg      = isNavy ? "#00133C" : "#202122";
         String headerBorder  = isNavy ? "#0f2d6b" : "#333333";
         String outerBorder   = isNavy ? headerBg  : "#555555";
-        String gridBorder    = isNavy ? "#e5e7eb" : "#cccccc";
+        String gridBorder    = isNavy ? "#CBCFDD" : "#CBD1CA";
         String timeBg     = isNavy ? "#F8FAFC" : "#f0f0f0";
         String subtitleColor = isNavy ? "#1E293B" : "#333333";
         String grayHex       = "#4f5d75";
-        String altBgHex      = isNavy ? "#F8FAFC" : "#F5F5F5";
-        String breakBg       = "#f5f5f5";
+        String breakBg       = "#f9fafb";
         String breakText     = "#4f5d75";
         String emptyColor    = "#94A3B8";
+        String bodyBg        = isNavy ? "#FCFCFC" : "#FAFAFA";
+        String outerFrameColor = isNavy ? "#030419" : "#0D0A0B";
 
         return "<!DOCTYPE html>"
                 + "<html><head>"
                 + "<meta charset=\"UTF-8\"/>"
                 + "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"/>"
                 + "<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin=\"anonymous\"/>"
-                + "<link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap\" rel=\"stylesheet\"/>"
+                + "<link href=\"https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800;900&display=swap\" rel=\"stylesheet\"/>"
                 + "<style>"
-                + buildCss(titleColor, headerBg, headerBorder, outerBorder, gridBorder,
-                        subtitleColor, grayHex, altBgHex, isNavy, breakBg, breakText, emptyColor, timeBg)
+                + buildCss(bodyBg, titleColor, headerBg, headerBorder, outerBorder, gridBorder,
+                        subtitleColor, grayHex, breakBg, breakText, emptyColor, timeBg, outerFrameColor, isNavy)
                 + "</style></head><body>"
                 + buildHeaderHtml(model, titleColor, grayHex, isNavy)
-                + buildTableHtml(model, isNavy, altBgHex)
+                + buildTableHtml(model, isNavy)
                 + buildLegendAndNoteHtml(headerBg)
                 + buildFooterHtml(model, headerBg)
                 + "</body></html>";
     }
 
-    private String buildCss(String titleColor, String headerBg, String headerBorder,
+    private String buildCss(String bodyBg, String titleColor, String headerBg, String headerBorder,
                             String outerBorder, String gridBorder,
                             String subtitleColor, String grayHex,
-                            String altBgHex, boolean isNavy, String breakBg,
-                            String breakText, String emptyColor, String timeBg) {
+                            String breakBg, String breakText,
+                            String emptyColor, String timeBg, String outerFrameColor, boolean isNavy) {
         int h  = ScheduleRenderModel.HEADER_ROW_HEIGHT;
         int cr = ScheduleRenderModel.COURSE_ROW_HEIGHT;
 
@@ -147,17 +162,19 @@ public class SchedulePngService {
             catCss.append(".").append(cls)
                     .append("{ background:").append(cat.bgHex).append(";")
                     .append(" border:1.5px solid ").append(cat.borderHex).append(";")
-                    .append(" border-radius:16px; padding:10px 12px; margin:6px;")
-                    .append(" box-shadow:0 2px 10px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);"
+                    .append(" border-radius:10px; padding:10px 12px; margin:6px;")
+                    .append(" box-shadow:0 1px 6px rgba(0,0,0,0.08);"
                             + " transition:none; }")
                     .append(".").append(cls).append(" .entry-code { color:")
                     .append(cat.codeHex).append("; }");
         }
 
         return "* { margin:0; padding:0; box-sizing:border-box; }"
-                + "body { background:#FFFFFF; width:" + TARGET_WIDTH_PX + "px;"
+                + "body { background:" + bodyBg + "; width:" + TARGET_WIDTH_PX + "px;"
                 + " font-family:'Inter','Segoe UI',Arial,sans-serif;"
-                + " padding-top:16px; padding-bottom:16px; margin:0; }"
+                + " padding-top:16px; padding-bottom:16px; margin:0;"
+                + " box-sizing:border-box;"
+                + " border:2px solid " + outerFrameColor + "; }"
                 + ".wrapper { width:96%; max-width:2760px; margin:0 auto; }"
                 + "table.header-outer { width:100%; table-layout:fixed; border-collapse:collapse; border:0; }"
                 + "table.header-outer td { border:0; padding:0; vertical-align:middle; }"
@@ -166,30 +183,29 @@ public class SchedulePngService {
                 + "td.hdr-right { width:31%; text-align:right;  vertical-align:bottom; padding:0; }"
                 + "td.hdr-left  img { display:inline-block; }"
                 + "td.hdr-right img { display:inline-block; }"
-                + ".title { font-size:" + ScheduleRenderModel.TITLE_SIZE + "px; font-weight:900;"
-                + " color:" + titleColor + "; letter-spacing:1px; white-space:nowrap;"
+                + ".title { font-family:'Archivo Black',sans-serif; font-size:" + ScheduleRenderModel.TITLE_SIZE + "px; font-weight:900;"
+                + " color:" + titleColor + "; letter-spacing:-2px; white-space:nowrap;"
                 + " line-height:1.0; margin-bottom:0px; }"
-                + ".subtitle { font-size:" + ScheduleRenderModel.SUBTITLE_SIZE + "px; font-weight:600;"
-                + " color:" + subtitleColor + "; margin-top:2px; margin-bottom:0px; }"
+                + ".subtitle { font-family:'Archivo Black',sans-serif; font-size:34px; font-weight:700;"
+                + " color:" + subtitleColor + "; letter-spacing:-0.5px; margin-top:2px; margin-bottom:0px; }"
                 + ".divider-svg { width:500px; height:30px; margin:4px 0; display:block; }"
-                + ".date-line { font-size:" + ScheduleRenderModel.DATE_SIZE + "px;"
-                + " color:" + grayHex + "; margin-top:2px; font-weight:500; }"
-                + ".thick-divider { border:none; height:7px; background:" + headerBg
-                + "; margin:10px 0 0 0; border-radius:0; }"
-                + ".tbl { width:100%; table-layout:fixed; border-collapse:collapse;"
-                + " border:3px solid " + outerBorder + "; }"
-                + ".tbl th { background:" + headerBg + "; color:#FFFFFF;"
+                + ".date-line { font-family:'Montserrat',sans-serif; font-size:" + ScheduleRenderModel.DATE_SIZE + "px;"
+                + " color:" + grayHex + "; letter-spacing:0; margin-top:2px; font-weight:500; }"
+
+                + ".tbl-wrap { border-radius:12px; overflow:hidden; border:3px solid " + outerBorder + "; }"
+                + ".tbl { width:100%; table-layout:fixed; border-collapse:collapse; border:0; }"
+                + ".tbl th { font-family:'Montserrat',sans-serif; background:" + headerBg + "; color:#FFFFFF;"
                 + " font-size:" + ScheduleRenderModel.HEADER_SIZE + "px;"
-                + " font-weight:700; text-align:center; padding:14px 6px;"
+                + " font-weight:700; text-align:center; padding:16px 6px;"
                 + " height:" + h + "px;"
-                + " letter-spacing:2.5px; border:1px solid " + headerBorder + "; }"
+                + " letter-spacing:0.5px; border:1px solid " + headerBorder + "; }"
                 + ".tbl td { border:1px solid " + gridBorder + "; height:" + cr + "px;"
-                + " vertical-align:middle; padding:0; }"
+                + " vertical-align:middle; padding:0; background:#ffffff; }"
                 + ".time-cell, .time-header { width:160px; min-width:140px; max-width:160px; }"
-                + ".time-cell { font-size:" + ScheduleRenderModel.TIME_SIZE + "px; font-weight:800;"
-                + " color:" + titleColor + "; text-align:center; vertical-align:middle;"
-                + " line-height:1.5; padding:6px 4px; background:" + timeBg + "; }"
-                + ".time-sub { font-size:24px; font-weight:400; color:" + grayHex
++ ".time-cell { font-size:22px; font-weight:700;"
+                    + " color:" + titleColor + "; text-align:center; vertical-align:middle;"
+                    + " line-height:1.4; padding:6px 4px; background:" + timeBg + "; }"
+                + ".time-sub { font-size:20px; font-weight:500; margin-top:2px; color:" + titleColor
                 + "; display:block; }"
                 + ".entry { text-align:center; line-height:1.4; }"
                 + ".entry-code { font-size:" + ScheduleRenderModel.COURSE_CODE_SIZE + "px;"
@@ -212,12 +228,11 @@ public class SchedulePngService {
                 + " font-weight:600; color:" + breakText + "; padding:8px; letter-spacing:0.5px; }"
                 + ".break-icon { display:inline-block; width:36px; height:36px;"
                 + " vertical-align:middle; margin-right:10px; }"
-                + ".alt-row td { background:" + altBgHex + "; }"
                 + ".bot-bar { display:table; width:100%; margin-top:8px;"
                 + " border:1px solid #e2e8f0; border-radius:12px; padding:14px 0; background:#ffffff; }"
                 + ".bot-bar .legends { display:table-cell; text-align:left; vertical-align:middle; padding-left:30px; }"
                 + ".legend-item { display:inline-block; padding:0 28px 0 0; vertical-align:middle; }"
-                + ".legend-dot { display:inline-block; width:22px; height:22px; border-radius:5px;"
+                + ".legend-dot { display:inline-block; width:26px; height:26px; border-radius:50%;"
                 + " margin-right:8px; vertical-align:middle; }"
                 + ".legend-label { font-size:28px; color:#1e293b; vertical-align:middle; font-weight:500; }"
                 + ".bot-bar .note-cell { display:table-cell; width:440px; text-align:right;"
@@ -244,24 +259,19 @@ public class SchedulePngService {
         String buildingB64 = buildingBase64(model.getTheme());
         String calIconB64  = svgRenderer.renderToBase64("assets/calendar_icon.svg", 36, 36);
 
-        int buildingW = model.getTheme() == ColorTheme.NAVY ? 500 : 480;
-        int buildingH = 240;
+        int buildingW = isNavy ? 820 : 940;
+        int buildingH = SchedulePngService.buildingH(isNavy);
 
         return "<div class=\"wrapper\">"
                 + "<table class=\"header-outer\"><tr>"
                 + "<td class=\"hdr-left\">"
-                + "<img src=\"" + shieldB64 + "\" width=\"220\" height=\"220\" alt=\"Shield\"/>"
+                + "<img src=\"" + shieldB64 + "\" width=\"270\" height=\"270\" alt=\"Shield\"/>"
                 + "</td>"
                 + "<td class=\"hdr-center\">"
                 + "<div class=\"title\">" + esc(model.getTitle()) + "</div>"
                 + "<div class=\"subtitle\">" + esc(model.getSubtitle()) + "</div>"
-                + "<div style=\"display:flex; align-items:center; gap:8px; margin:8px 0 6px 0; width:500px;\">"
-                + "<div style=\"flex:1; height:1px; background:" + titleColor + "; opacity:0.2;\"></div>"
-                + "<span style=\"color:" + titleColor + "; font-size:8px; letter-spacing:8px; opacity:0.45;\">"
-                + "&#9679;&nbsp;&#9679;&nbsp;&#9679;&nbsp;&#9679;&nbsp;&#9679;"
-                + "</span>"
-                + "<div style=\"flex:1; height:1px; background:" + titleColor + "; opacity:0.2;\"></div>"
-                + "</div>"
+                + "<img src=\"" + dividerBase64(model.getTheme()) + "\" width=\"380\" height=\"24\""
+                + " style=\"display:block; margin:6px 0;\" alt=\"\"/>"
                 + "<div class=\"date-line\">"
                 + "<img src=\"" + calIconB64 + "\" width=\"30\" height=\"30\" "
                 + "style=\"vertical-align:middle; margin-right:8px;\" alt=\"\"/>"
@@ -274,13 +284,12 @@ public class SchedulePngService {
                 + "<img src=\"" + buildingB64 + "\" width=\"" + buildingW + "\" height=\"" + buildingH + "\" alt=\"Building\"/>"
                 + "</div></td>"
                 + "</tr></table>"
-                + "<div class=\"thick-divider\"></div>"
                 + "</div>";
     }
 
-    private String buildTableHtml(ScheduleRenderModel model, boolean isNavy, String altBgHex) {
+    private String buildTableHtml(ScheduleRenderModel model, boolean isNavy) {
         StringBuilder sb = new StringBuilder();
-        sb.append("<div class=\"wrapper\"><table class=\"tbl\"><colgroup>");
+        sb.append("<div class=\"wrapper\"><div class=\"tbl-wrap\"><table class=\"tbl\"><colgroup>");
         sb.append("<col style=\"width:160px\"/>");
         for (int i = 1; i < model.getColumns().size(); i++)
             sb.append("<col style=\"width:auto\"/>");
@@ -295,7 +304,6 @@ public class SchedulePngService {
         String pinIconB64 = svgRenderer.renderToBase64("assets/pin_icon.svg", 44, 44);
 
         for (RowDef row : model.getRows()) {
-            boolean isAlt = isNavy && row.getIndex() % 2 == 1;
 
             if (row.getType() == RowType.BREAK) {
                 sb.append("<tr class=\"break-row\">");
@@ -311,7 +319,7 @@ public class SchedulePngService {
                 continue;
             }
 
-            sb.append(isAlt ? "<tr class=\"alt-row\">" : "<tr>");
+            sb.append("<tr>");
             sb.append("<td class=\"time-cell\">").append(esc(row.getTimeLabel()))
                     .append("<span class=\"time-sub\">").append(esc(row.getTimeSubLabel()))
                     .append("</span></td>");
@@ -323,10 +331,11 @@ public class SchedulePngService {
                     CourseCategory cat = cc.getCategory();
                     String catCls   = "cat-" + cat.name().toLowerCase().replace('_', '-');
                     String entryCls = cc.hasConflict() ? "entry entry-conflict" : "entry";
+                    String codeColor = isNavy ? "#0B1B4F" : cat.codeHex;
                     sb.append("<td>")
                             .append("<div class=\"").append(catCls).append("\">")
                             .append("<div class=\"").append(entryCls).append("\">")
-                            .append("<span class=\"entry-code\">")
+                            .append("<span class=\"entry-code\" style=\"color:").append(codeColor).append(";\">")
                             .append(esc(cc.getCourseCode())).append("</span>")
                             .append("<span class=\"entry-name\">")
                             .append(esc(cc.getCourseName())).append("</span>")
@@ -344,7 +353,7 @@ public class SchedulePngService {
             sb.append("</tr>");
         }
 
-        sb.append("</tbody></table></div>");
+        sb.append("</tbody></table></div></div>");
         return sb.toString();
     }
 

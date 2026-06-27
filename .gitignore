@@ -33,3 +33,9 @@ backend/schedule-*.pdf
 backend/schedule-*.xlsx
 backend/wrapper.jar
 backend/src/main/java/com/example/timetable/service/TestTmp.txt
+*.mv.db
+data/
+backend/open-design/
+ChatGPT*.png
+backend/src/main/resources/fonts/
+backend/src/main/resources/application-mysql.properties

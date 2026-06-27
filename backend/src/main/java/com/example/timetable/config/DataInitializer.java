@@ -42,5 +42,25 @@ public class DataInitializer implements CommandLineRunner {
 
             userRepository.save(admin);
         }
+
+        // Create default scheduler if not exists
+        if (userRepository.findByEmail("scheduler@system.com").isEmpty()) {
+
+            User scheduler = new User();
+
+            scheduler.setFullName("System Scheduler");
+
+            scheduler.setEmail("scheduler@system.com");
+
+            scheduler.setPassword(
+                    passwordEncoder.encode("scheduler123")
+            );
+
+            scheduler.setRole(UserRole.SCHEDULER);
+
+            scheduler.setEnabled(true);
+
+            userRepository.save(scheduler);
+        }
     }
 }
